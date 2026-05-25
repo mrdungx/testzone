@@ -208,7 +208,7 @@
     if (view === 'home') {
       renderHome();
       backBtn.hidden = true;
-      titleEl.textContent = '10-Day China Trip';
+      titleEl.textContent = 'Quick Mandarin for AhaSlides';
       history.replaceState({ view: 'home' }, '', '#');
     } else if (view.startsWith('lesson-')) {
       const id = parseInt(view.split('-')[1], 10);

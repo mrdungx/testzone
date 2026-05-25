@@ -1,12 +1,15 @@
 :root {
+  /* AhaSlides brand palette — Radical Pink + Violet (see Design Principles doc) */
   --bg: #fafaf7;
   --surface: #ffffff;
   --surface-2: #f4f4ef;
   --ink: #1c1917;
   --ink-soft: #57534e;
   --ink-faint: #a8a29e;
-  --accent: #b91c1c;
-  --accent-soft: #fee2e2;
+  --accent: #FF2D87;       /* Radical Pink */
+  --accent-soft: #FFE4EF;
+  --accent-deep: #C20E63;
+  --violet: #7C3AED;       /* AhaSlides Violet — used in hero gradient */
   --gold: #d4a017;
   --green: #15803d;
   --green-soft: #dcfce7;
@@ -26,8 +29,10 @@
     --ink: #f5f5f4;
     --ink-soft: #d6d3d1;
     --ink-faint: #78716c;
-    --accent: #f87171;
-    --accent-soft: #3b1818;
+    --accent: #FF6BAA;
+    --accent-soft: #3b1828;
+    --accent-deep: #FF2D87;
+    --violet: #A78BFA;
     --green-soft: #14301c;
     --blue-soft: #1a2444;
     --gold: #facc15;
@@ -68,13 +73,34 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.topbar h1 {
+.brand {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand-logo {
+  height: 22px;
+  width: auto;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.topbar h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 380px) {
+  .topbar h1 { font-size: 13px; }
 }
 
 .icon-btn {
@@ -99,7 +125,7 @@ main { padding: 16px; }
 /* ----------------- Home ----------------- */
 
 .hero {
-  background: linear-gradient(135deg, var(--accent) 0%, #7f1d1d 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--violet) 100%);
   color: #fff;
   border-radius: var(--radius-lg);
   padding: 22px;
@@ -975,7 +1001,7 @@ main { padding: 16px; }
 .onb-avatar-btn.selected {
   border-color: var(--accent);
   background: var(--accent-soft);
-  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 45, 135, 0.18);
 }
 
 .primary-btn.full,
