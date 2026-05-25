@@ -7,7 +7,6 @@
     ? window.APP_CONFIG
     : { mode: 'local' };
 
-  const REMOTE_KEY = 'learners';
   const POLL_INTERVAL_MS = 25000;
 
   const LEARNER_KEY = 'china-trip-learner-v1';
@@ -88,11 +87,16 @@
     pushRemote(l);
   }
 
-  // ---------------- Remote sync (kvdb.io) ----------------
+  // ---------------- Remote sync (jsonblob / npoint / kvdb) ----------------
 
   function remoteUrl() {
-    if (CONFIG.mode !== 'shared' || !CONFIG.bucket || !CONFIG.endpoint) return null;
-    return `${CONFIG.endpoint}/${CONFIG.bucket}/${REMOTE_KEY}`;
+    if (CONFIG.mode !== 'shared' || !CONFIG.url) return null;
+    return CONFIG.url;
+  }
+
+  function writeMethod() {
+    // jsonblob requires PUT to update; npoint & kvdb accept POST.
+    return CONFIG.provider === 'jsonblob' ? 'PUT' : 'POST';
   }
 
   let remoteCache = null;
@@ -106,7 +110,8 @@
       if (!res.ok) throw new Error('GET ' + res.status);
       const text = await res.text();
       if (!text) return {};
-      remoteCache = JSON.parse(text);
+      const parsed = JSON.parse(text);
+      remoteCache = (parsed && typeof parsed === 'object') ? parsed : {};
       return remoteCache;
     } catch (e) {
       console.warn('Leaderboard fetch failed:', e.message);
@@ -121,7 +126,7 @@
       const current = await fetchRemote();
       current[learner.id] = stripLearnerForRemote(learner);
       await fetch(url, {
-        method: 'POST',
+        method: writeMethod(),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(current),
       });
