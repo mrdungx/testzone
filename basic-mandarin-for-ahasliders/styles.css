@@ -1,15 +1,16 @@
 :root {
-  /* AhaSlides brand palette — Radical Pink + Violet (see Design Principles doc) */
+  /* AhaSlides brand palette — sampled from the official logo (FF4081 / 6A1EBB / 1A1A2E) */
   --bg: #fafaf7;
   --surface: #ffffff;
   --surface-2: #f4f4ef;
   --ink: #1c1917;
   --ink-soft: #57534e;
   --ink-faint: #a8a29e;
-  --accent: #FF2D87;       /* Radical Pink */
-  --accent-soft: #FFE4EF;
-  --accent-deep: #C20E63;
-  --violet: #7C3AED;       /* AhaSlides Violet — used in hero gradient */
+  --accent: #FF4081;       /* Radical Pink */
+  --accent-soft: #FFE0EC;
+  --accent-deep: #C2185B;
+  --violet: #6A1EBB;       /* AhaSlides Violet */
+  --deep-space: #1A1A2E;   /* Deep Space Blue */
   --gold: #d4a017;
   --green: #15803d;
   --green-soft: #dcfce7;
@@ -29,10 +30,11 @@
     --ink: #f5f5f4;
     --ink-soft: #d6d3d1;
     --ink-faint: #78716c;
-    --accent: #FF6BAA;
+    --accent: #FF6BA0;
     --accent-soft: #3b1828;
-    --accent-deep: #FF2D87;
-    --violet: #A78BFA;
+    --accent-deep: #FF4081;
+    --violet: #9F6CE8;
+    --deep-space: #0F0F1F;
     --green-soft: #14301c;
     --blue-soft: #1a2444;
     --gold: #facc15;
@@ -125,7 +127,7 @@ main { padding: 16px; }
 /* ----------------- Home ----------------- */
 
 .hero {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--violet) 100%);
+  background: var(--violet);
   color: #fff;
   border-radius: var(--radius-lg);
   padding: 22px;
