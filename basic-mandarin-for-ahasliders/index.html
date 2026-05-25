@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://api.dicebear.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
@@ -23,15 +24,18 @@
     <section class="home">
       <div class="hero">
         <div class="hero-row">
-          <div class="hero-flag">🇨🇳</div>
-          <div>
-            <h2>Sẵn sàng đi Trung Quốc!</h2>
-            <p class="hero-sub">15 phút mỗi ngày · 10 ngày · tiếng Trung thực dụng cho khách du lịch</p>
-          </div>
+          <button class="hero-profile" id="profile-chip" type="button" aria-label="Edit profile">
+            <span class="hero-avatar" id="hero-avatar"></span>
+            <span class="hero-name-block">
+              <small>Bạn là</small>
+              <strong id="hero-name">—</strong>
+            </span>
+            <span class="hero-edit">✎</span>
+          </button>
         </div>
         <div class="hero-stats">
           <div><strong id="days-left">—</strong><span>days to trip</span></div>
-          <div><strong id="words-learned">0</strong><span>words studied</span></div>
+          <div><strong id="words-learned">0</strong><span>words</span></div>
           <div><strong id="streak">0</strong><span>day streak</span></div>
         </div>
       </div>
@@ -40,8 +44,16 @@
         <strong>Tip:</strong> Many Chinese words are nearly identical to Vietnamese (Hán Việt). Look for the <span class="hv-pill">HV</span> badge — those are essentially free for you.
       </div>
 
-      <h3 class="section-h">Your 10-day plan</h3>
+      <div class="section-row">
+        <h3 class="section-h">Your 10-day plan</h3>
+      </div>
       <ol id="lesson-list" class="lesson-list"></ol>
+
+      <div class="section-row">
+        <h3 class="section-h">Learners</h3>
+        <span class="section-h-right" id="learners-status"></span>
+      </div>
+      <div id="leaderboard" class="leaderboard"></div>
 
       <div class="util-row">
         <button id="reset-btn" class="ghost-btn">Reset progress</button>
@@ -75,6 +87,34 @@
     </section>
   </template>
 
+  <template id="tpl-onboarding">
+    <div class="onboarding-backdrop">
+      <div class="onboarding-card">
+        <div class="onboarding-head">
+          <div class="hero-flag">🇨🇳</div>
+          <h2 id="onb-title">Welcome! Pick a nickname & avatar</h2>
+          <p id="onb-sub">Bạn sẽ xuất hiện trên bảng xếp hạng cùng những người học khác.</p>
+        </div>
+
+        <label class="onb-label" for="onb-nickname">Nickname</label>
+        <input id="onb-nickname" type="text" maxlength="20" placeholder="e.g. Dave, Linh, …" autocomplete="off" />
+
+        <label class="onb-label">Avatar style</label>
+        <div class="onb-styles" id="onb-styles"></div>
+
+        <div class="onb-grid-head">
+          <label class="onb-label">Pick one</label>
+          <button type="button" class="ghost-btn small" id="onb-shuffle">🎲 Shuffle</button>
+        </div>
+        <div class="onb-avatars" id="onb-avatars"></div>
+
+        <button class="primary-btn full" id="onb-submit" disabled>Start learning! →</button>
+        <button type="button" class="ghost-btn full" id="onb-cancel" hidden>Cancel</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="config.js"></script>
   <script src="lessons.js"></script>
   <script src="app.js"></script>
 </body>

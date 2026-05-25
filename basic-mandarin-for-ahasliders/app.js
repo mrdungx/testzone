@@ -1,53 +1,165 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'china-trip-progress-v1';
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  // ---------------- Config ----------------
 
-  // ---------------- Storage ----------------
+  const CONFIG = (window.APP_CONFIG && typeof window.APP_CONFIG === 'object')
+    ? window.APP_CONFIG
+    : { mode: 'local' };
 
-  function loadProgress() {
+  const REMOTE_KEY = 'learners';
+  const POLL_INTERVAL_MS = 25000;
+
+  const LEARNER_KEY = 'china-trip-learner-v1';
+  const OLD_PROGRESS_KEY = 'china-trip-progress-v1';
+
+  const AVATAR_STYLES = [
+    { id: 'lorelei',         label: '🙂 Faces' },
+    { id: 'fun-emoji',       label: '😀 Emoji' },
+    { id: 'bottts-neutral',  label: '🤖 Bots'  },
+    { id: 'adventurer',      label: '🧑‍🚀 People' },
+    { id: 'big-smile',       label: '😄 Smile' },
+  ];
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  // ---------------- Local learner state ----------------
+
+  function loadLearner() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-        completedLessons: [],
-        wordsStudied: 0,
-        lastStudyDate: null,
-        streak: 0,
-      };
-    } catch {
-      return { completedLessons: [], wordsStudied: 0, lastStudyDate: null, streak: 0 };
-    }
+      const raw = localStorage.getItem(LEARNER_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    // Migrate from old progress-only key if present
+    try {
+      const old = JSON.parse(localStorage.getItem(OLD_PROGRESS_KEY) || 'null');
+      if (old && typeof old === 'object') {
+        return {
+          _migrationPending: true,
+          completedLessons: old.completedLessons || [],
+          wordsStudied: old.wordsStudied || 0,
+          streak: old.streak || 0,
+          lastStudyDate: old.lastStudyDate || null,
+        };
+      }
+    } catch {}
+    return null;
   }
 
-  function saveProgress(p) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  function saveLearner(l) {
+    localStorage.setItem(LEARNER_KEY, JSON.stringify(l));
+  }
+
+  function genId() {
+    if (crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'x' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+
+  function newLearner({ nickname, avatarStyle, avatarSeed, existing }) {
+    return {
+      id: (existing && existing.id) || genId(),
+      nickname: nickname.trim(),
+      avatarStyle,
+      avatarSeed,
+      completedLessons: (existing && existing.completedLessons) || [],
+      wordsStudied: (existing && existing.wordsStudied) || 0,
+      streak: (existing && existing.streak) || 0,
+      lastStudyDate: (existing && existing.lastStudyDate) || null,
+      updatedAt: Date.now(),
+    };
   }
 
   function markLessonDone(lessonId, wordsCount) {
-    const p = loadProgress();
-    if (!p.completedLessons.includes(lessonId)) {
-      p.completedLessons.push(lessonId);
-      p.wordsStudied += wordsCount;
+    const l = loadLearner();
+    if (!l || !l.id) return;
+    if (!l.completedLessons.includes(lessonId)) {
+      l.completedLessons.push(lessonId);
+      l.wordsStudied += wordsCount;
     }
     const today = new Date().toISOString().slice(0, 10);
-    if (p.lastStudyDate !== today) {
+    if (l.lastStudyDate !== today) {
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      p.streak = p.lastStudyDate === yesterday ? p.streak + 1 : 1;
-      p.lastStudyDate = today;
+      l.streak = l.lastStudyDate === yesterday ? l.streak + 1 : 1;
+      l.lastStudyDate = today;
     }
-    saveProgress(p);
+    l.updatedAt = Date.now();
+    saveLearner(l);
+    pushRemote(l);
   }
 
-  function resetProgress() {
-    localStorage.removeItem(STORAGE_KEY);
+  // ---------------- Remote sync (kvdb.io) ----------------
+
+  function remoteUrl() {
+    if (CONFIG.mode !== 'shared' || !CONFIG.bucket || !CONFIG.endpoint) return null;
+    return `${CONFIG.endpoint}/${CONFIG.bucket}/${REMOTE_KEY}`;
+  }
+
+  let remoteCache = null;
+
+  async function fetchRemote() {
+    const url = remoteUrl();
+    if (!url) return {};
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      if (res.status === 404) return {};
+      if (!res.ok) throw new Error('GET ' + res.status);
+      const text = await res.text();
+      if (!text) return {};
+      remoteCache = JSON.parse(text);
+      return remoteCache;
+    } catch (e) {
+      console.warn('Leaderboard fetch failed:', e.message);
+      return remoteCache || {};
+    }
+  }
+
+  async function pushRemote(learner) {
+    const url = remoteUrl();
+    if (!url) return;
+    try {
+      const current = await fetchRemote();
+      current[learner.id] = stripLearnerForRemote(learner);
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(current),
+      });
+      remoteCache = current;
+    } catch (e) {
+      console.warn('Leaderboard push failed:', e.message);
+    }
+  }
+
+  function stripLearnerForRemote(l) {
+    return {
+      id: l.id,
+      nickname: l.nickname,
+      avatarStyle: l.avatarStyle,
+      avatarSeed: l.avatarSeed,
+      completedLessons: l.completedLessons,
+      wordsStudied: l.wordsStudied,
+      streak: l.streak,
+      lastStudyDate: l.lastStudyDate,
+      updatedAt: l.updatedAt,
+    };
+  }
+
+  // ---------------- Avatars ----------------
+
+  function avatarUrl(style, seed, size = 80) {
+    const s = encodeURIComponent(seed || 'default');
+    return `https://api.dicebear.com/9.x/${style}/svg?seed=${s}&size=${size}`;
+  }
+
+  function randSeed() {
+    const words = ['fox','tiger','panda','dragon','pho','bun','jade','silk','star','moon','river','peak','phoenix','sparrow','lotus','ginger','wind','cloud','bao','linh'];
+    return words[Math.floor(Math.random() * words.length)] + '-' + Math.floor(Math.random() * 9999);
   }
 
   // ---------------- Speech ----------------
 
-  let voicesLoaded = false;
   let zhVoice = null;
-
   function loadVoices() {
     const voices = speechSynthesis.getVoices();
     zhVoice =
@@ -55,38 +167,39 @@
       voices.find(v => v.lang.startsWith('zh-CN')) ||
       voices.find(v => v.lang.startsWith('zh')) ||
       null;
-    voicesLoaded = true;
   }
-
   if ('speechSynthesis' in window) {
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
   }
-
   function speak(text) {
     if (!('speechSynthesis' in window)) return;
-    if (!voicesLoaded) loadVoices();
     speechSynthesis.cancel();
-    // Strip pinyin & non-Hanzi for the spoken text
     const clean = text.replace(/[^一-鿿]/g, '');
     if (!clean) return;
     const u = new SpeechSynthesisUtterance(clean);
     u.lang = 'zh-CN';
     if (zhVoice) u.voice = zhVoice;
     u.rate = 0.85;
-    u.pitch = 1;
     speechSynthesis.speak(u);
   }
 
   // ---------------- Routing ----------------
 
-  const app = $('#app');
-  const titleEl = $('#title');
-  const backBtn = $('#back-btn');
+  const app      = $('#app');
+  const titleEl  = $('#title');
+  const backBtn  = $('#back-btn');
   const cheatBtn = $('#cheatsheet-btn');
+
+  let homePollHandle = null;
+
+  function clearHomePoll() {
+    if (homePollHandle) { clearInterval(homePollHandle); homePollHandle = null; }
+  }
 
   function go(view) {
     window.scrollTo(0, 0);
+    clearHomePoll();
     if (view === 'home') {
       renderHome();
       backBtn.hidden = true;
@@ -109,16 +222,9 @@
   cheatBtn.addEventListener('click', () => go('cheatsheet'));
   window.addEventListener('popstate', e => {
     const v = (e.state && e.state.view) || 'home';
-    if (v === 'home') {
-      renderHome();
-      backBtn.hidden = true;
-    } else if (v === 'cheatsheet') {
-      renderCheatsheet();
-      backBtn.hidden = false;
-    } else if (v.startsWith('lesson-')) {
-      renderLesson(parseInt(v.split('-')[1], 10));
-      backBtn.hidden = false;
-    }
+    if (v === 'home')                  { renderHome(); backBtn.hidden = true; }
+    else if (v === 'cheatsheet')       { renderCheatsheet(); backBtn.hidden = false; }
+    else if (v.startsWith('lesson-'))  { renderLesson(parseInt(v.split('-')[1], 10)); backBtn.hidden = false; }
   });
 
   // ---------------- Home ----------------
@@ -134,14 +240,23 @@
     const tpl = $('#tpl-home').content.cloneNode(true);
     app.replaceChildren(tpl);
 
-    const p = loadProgress();
+    const learner = loadLearner();
+    if (!learner || !learner.id) {
+      showOnboarding({ edit: false, migrationData: learner || null });
+      return;
+    }
+
+    $('#hero-name').textContent = learner.nickname;
+    $('#hero-avatar').style.backgroundImage = `url("${avatarUrl(learner.avatarStyle, learner.avatarSeed, 120)}")`;
+    $('#profile-chip').addEventListener('click', () => showOnboarding({ edit: true }));
+
     $('#days-left').textContent = Math.max(0, daysUntilTrip());
-    $('#words-learned').textContent = p.wordsStudied;
-    $('#streak').textContent = p.streak;
+    $('#words-learned').textContent = learner.wordsStudied;
+    $('#streak').textContent = learner.streak;
 
     const list = $('#lesson-list');
     LESSONS.forEach(lesson => {
-      const done = p.completedLessons.includes(lesson.id);
+      const done = learner.completedLessons.includes(lesson.id);
       const li = document.createElement('li');
       li.className = 'lesson-card' + (done ? ' done' : '');
       li.innerHTML = `
@@ -157,23 +272,193 @@
     });
 
     $('#reset-btn').addEventListener('click', () => {
-      if (confirm('Reset all progress?')) {
-        resetProgress();
+      if (confirm('Reset your progress? Your nickname & avatar stay; words & streak reset.')) {
+        const l = loadLearner();
+        l.completedLessons = [];
+        l.wordsStudied = 0;
+        l.streak = 0;
+        l.lastStudyDate = null;
+        l.updatedAt = Date.now();
+        saveLearner(l);
+        pushRemote(l);
         renderHome();
       }
     });
+
+    refreshLeaderboard(learner);
+    if (CONFIG.mode === 'shared') {
+      homePollHandle = setInterval(() => refreshLeaderboard(learner), POLL_INTERVAL_MS);
+    }
   }
 
-  // ---------------- Lesson ----------------
+  async function refreshLeaderboard(currentLearner) {
+    const el = $('#leaderboard');
+    const status = $('#learners-status');
+    if (!el) return;
 
-  // Build the steps array for a lesson: [intro?, ...vocab, ...quiz, done]
+    if (CONFIG.mode !== 'shared') {
+      status.textContent = 'local mode';
+      el.innerHTML = renderLeaderboardRows([currentLearner], currentLearner.id);
+      return;
+    }
+
+    status.textContent = 'syncing…';
+    const data = await fetchRemote();
+    if (!data[currentLearner.id]) data[currentLearner.id] = stripLearnerForRemote(currentLearner);
+    const learners = Object.values(data);
+    status.textContent = `${learners.length} learner${learners.length === 1 ? '' : 's'}`;
+    el.innerHTML = renderLeaderboardRows(learners, currentLearner.id);
+  }
+
+  function renderLeaderboardRows(learners, currentId) {
+    if (!learners.length) {
+      return `<div class="leaderboard-empty">Bạn là người đầu tiên! Mời bạn bè vào học cùng nhé 🎉</div>`;
+    }
+    const sorted = learners.slice().sort((a, b) => {
+      if (b.wordsStudied !== a.wordsStudied) return b.wordsStudied - a.wordsStudied;
+      return (b.streak || 0) - (a.streak || 0);
+    });
+    return sorted.map((l, i) => {
+      const rank = i + 1;
+      const medalClass = rank <= 3 ? `medal-${rank}` : '';
+      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+      const isYou = l.id === currentId;
+      const lessonsDone = (l.completedLessons || []).length;
+      return `
+        <div class="leaderboard-row${isYou ? ' you' : ''}">
+          <div class="lb-rank ${medalClass}">${medal}</div>
+          <div class="lb-avatar" style="background-image:url('${avatarUrl(l.avatarStyle, l.avatarSeed, 80)}')"></div>
+          <div class="lb-info">
+            <div class="lb-name">
+              ${escapeHtml(l.nickname || 'Anonymous')}
+              ${isYou ? '<span class="you-tag">YOU</span>' : ''}
+            </div>
+            <div class="lb-stats">
+              Day ${lessonsDone}/10
+              <span class="sep">·</span>
+              ${l.streak || 0}🔥
+            </div>
+          </div>
+          <div class="lb-right">${l.wordsStudied || 0}<small>words</small></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ---------------- Onboarding ----------------
+
+  function showOnboarding({ edit, migrationData }) {
+    const existing = edit ? loadLearner() : (migrationData || null);
+    const tpl = $('#tpl-onboarding').content.cloneNode(true);
+    document.body.appendChild(tpl);
+    const root = $('.onboarding-backdrop');
+
+    if (edit) {
+      $('#onb-title').textContent = 'Edit your profile';
+      $('#onb-sub').textContent  = 'Đổi tên hoặc avatar — tiến độ của bạn không đổi.';
+      $('#onb-submit').textContent = 'Save changes';
+      $('#onb-cancel').hidden = false;
+      $('#onb-nickname').value = (existing && existing.nickname) || '';
+    }
+
+    let activeStyle = (existing && existing.avatarStyle) || AVATAR_STYLES[0].id;
+    let seeds = generateSeeds();
+    let selectedSeed = (existing && existing.avatarSeed) || null;
+    if (selectedSeed && !seeds.includes(selectedSeed)) seeds[0] = selectedSeed;
+
+    const stylesEl = $('#onb-styles');
+    AVATAR_STYLES.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'onb-style-tab' + (s.id === activeStyle ? ' active' : '');
+      b.textContent = s.label;
+      b.addEventListener('click', () => {
+        activeStyle = s.id;
+        $$('.onb-style-tab', stylesEl).forEach(x => x.classList.toggle('active', x === b));
+        seeds = generateSeeds();
+        selectedSeed = null;
+        paintAvatars();
+        updateSubmit();
+      });
+      stylesEl.appendChild(b);
+    });
+
+    function generateSeeds() {
+      const out = [];
+      for (let i = 0; i < 8; i++) out.push(randSeed());
+      return out;
+    }
+
+    function paintAvatars() {
+      const grid = $('#onb-avatars');
+      grid.innerHTML = '';
+      seeds.forEach(seed => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'onb-avatar-btn' + (seed === selectedSeed ? ' selected' : '');
+        btn.dataset.seed = seed;
+        const img = document.createElement('img');
+        img.src = avatarUrl(activeStyle, seed, 120);
+        img.alt = '';
+        img.loading = 'lazy';
+        btn.appendChild(img);
+        btn.addEventListener('click', () => {
+          selectedSeed = seed;
+          $$('.onb-avatar-btn', grid).forEach(x =>
+            x.classList.toggle('selected', x.dataset.seed === seed)
+          );
+          updateSubmit();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function updateSubmit() {
+      const nick = $('#onb-nickname').value.trim();
+      $('#onb-submit').disabled = !(nick.length > 0 && selectedSeed);
+    }
+
+    paintAvatars();
+    updateSubmit();
+
+    $('#onb-nickname').addEventListener('input', updateSubmit);
+    $('#onb-shuffle').addEventListener('click', () => {
+      seeds = generateSeeds();
+      selectedSeed = null;
+      paintAvatars();
+      updateSubmit();
+    });
+
+    $('#onb-cancel').addEventListener('click', () => root.remove());
+
+    $('#onb-submit').addEventListener('click', () => {
+      const nickname = $('#onb-nickname').value.trim();
+      if (!nickname || !selectedSeed) return;
+      const learner = newLearner({
+        nickname,
+        avatarStyle: activeStyle,
+        avatarSeed: selectedSeed,
+        existing,
+      });
+      saveLearner(learner);
+      // Clean up the old key now that we've migrated.
+      try { localStorage.removeItem(OLD_PROGRESS_KEY); } catch {}
+      pushRemote(learner);
+      root.remove();
+      renderHome();
+    });
+
+    setTimeout(() => $('#onb-nickname').focus(), 50);
+  }
+
+  // ---------------- Lesson stepper ----------------
+
   function buildSteps(lesson) {
     const steps = [];
     if (lesson.intro) steps.push({ type: 'intro', data: lesson.intro });
     lesson.vocab.forEach((v, i) =>
       steps.push({ type: 'vocab', data: v, index: i, total: lesson.vocab.length })
     );
-    // Generate ~4 quiz questions from vocab
     const quizCount = Math.min(4, lesson.vocab.length);
     const pool = shuffle([...lesson.vocab]).slice(0, quizCount);
     pool.forEach(item => steps.push({ type: 'quiz', data: item, vocab: lesson.vocab }));
@@ -188,14 +473,13 @@
     const tpl = $('#tpl-lesson').content.cloneNode(true);
     app.replaceChildren(tpl);
     titleEl.textContent = `Day ${lesson.id}`;
-
     $('#day-pill').textContent = `Day ${lesson.id} of 10`;
     $('#lesson-title').textContent = lesson.title;
     $('#lesson-sub').textContent = lesson.subtitle;
 
     const steps = buildSteps(lesson);
     let idx = 0;
-    let quizState = { asked: 0, correct: 0 };
+    const quizState = { asked: 0, correct: 0 };
 
     const dots = $('#progress-dots');
     steps.forEach(() => dots.appendChild(document.createElement('span')));
@@ -207,7 +491,6 @@
         d.classList.toggle('active', i === idx);
         d.classList.toggle('done', i < idx);
       });
-
       $('#prev-step').disabled = idx === 0;
       const nextBtn = $('#next-step');
       nextBtn.disabled = false;
@@ -218,7 +501,6 @@
       } else if (step.type === 'vocab') {
         body.innerHTML = renderVocab(step.data, step.index, step.total);
         wireSpeakers(body);
-        // Auto-pronounce
         speak(step.data.hanzi);
       } else if (step.type === 'quiz') {
         body.innerHTML = renderQuiz(step.data, step.vocab, idx);
@@ -242,13 +524,8 @@
       }
     }
 
-    $('#prev-step').addEventListener('click', () => {
-      if (idx > 0) { idx--; renderStep(); }
-    });
-    $('#next-step').addEventListener('click', () => {
-      if (idx < steps.length - 1) { idx++; renderStep(); }
-    });
-
+    $('#prev-step').addEventListener('click', () => { if (idx > 0) { idx--; renderStep(); } });
+    $('#next-step').addEventListener('click', () => { if (idx < steps.length - 1) { idx++; renderStep(); } });
     renderStep();
   }
 
@@ -276,14 +553,13 @@
         <div class="pinyin">${escapeHtml(v.pinyin)}</div>
         <div class="english">${escapeHtml(v.en)}</div>
         <div class="vietnamese">${escapeHtml(v.vn)}</div>
-        ${v.hv ? `<div class="hv-block"><span class="hv-pill">HV</span>${v.hv}</div>` : ''}
+        ${v.hv   ? `<div class="hv-block"><span class="hv-pill">HV</span>${v.hv}</div>` : ''}
         ${v.note ? `<div class="note"><strong>Note:</strong> ${v.note}</div>` : ''}
       </div>
     `;
   }
 
   function renderQuiz(item, pool, seed) {
-    // Alternate question style: hanzi→meaning vs meaning→hanzi
     const showHanziPrompt = seed % 2 === 0;
     const distractors = shuffle(pool.filter(v => v.hanzi !== item.hanzi)).slice(0, 3);
     const options = shuffle([item, ...distractors]);
@@ -302,14 +578,12 @@
       `;
     }
 
-    const optHtml = options
-      .map(o => {
-        const label = showHanziPrompt
-          ? `<strong>${escapeHtml(o.en)}</strong> — <span style="color:var(--ink-soft)">${escapeHtml(o.vn)}</span>`
-          : `<span style="font-family:'Noto Sans SC',sans-serif;font-size:18px">${escapeHtml(o.hanzi)}</span> <span style="color:var(--accent);font-size:13px;margin-left:6px">${escapeHtml(o.pinyin)}</span>`;
-        return `<button class="quiz-opt" data-hanzi="${escapeAttr(o.hanzi)}">${label}</button>`;
-      })
-      .join('');
+    const optHtml = options.map(o => {
+      const label = showHanziPrompt
+        ? `<strong>${escapeHtml(o.en)}</strong> — <span style="color:var(--ink-soft)">${escapeHtml(o.vn)}</span>`
+        : `<span style="font-family:'Noto Sans SC',sans-serif;font-size:18px">${escapeHtml(o.hanzi)}</span> <span style="color:var(--accent);font-size:13px;margin-left:6px">${escapeHtml(o.pinyin)}</span>`;
+      return `<button class="quiz-opt" data-hanzi="${escapeAttr(o.hanzi)}">${label}</button>`;
+    }).join('');
 
     return `
       <div class="quiz-card">
@@ -356,7 +630,6 @@
     const tpl = $('#tpl-cheatsheet').content.cloneNode(true);
     app.replaceChildren(tpl);
 
-    // Build lookup: hanzi → vocab item
     const vocabByHanzi = {};
     LESSONS.forEach(l => l.vocab.forEach(v => { vocabByHanzi[v.hanzi] = v; }));
 
@@ -384,7 +657,6 @@
       });
       body.appendChild(section);
     });
-
     wireSpeakers(body);
   }
 
@@ -407,17 +679,12 @@
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
-
-  function escapeAttr(s) { return escapeHtml(s); }
+  const escapeAttr = escapeHtml;
 
   // ---------------- Boot ----------------
 
   const initial = (location.hash || '').replace('#', '');
-  if (initial.startsWith('lesson-')) {
-    go(initial);
-  } else if (initial === 'cheatsheet') {
-    go('cheatsheet');
-  } else {
-    go('home');
-  }
+  if (initial.startsWith('lesson-'))      go(initial);
+  else if (initial === 'cheatsheet')      go('cheatsheet');
+  else                                    go('home');
 })();
