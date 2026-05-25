@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#b91c1c" />
+  <title>10-Day China Trip Chinese</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="back-btn" class="icon-btn" aria-label="Back" hidden>←</button>
+    <h1 id="title">10-Day China Trip</h1>
+    <button id="cheatsheet-btn" class="icon-btn" aria-label="Cheat sheet" title="Cheat sheet">📋</button>
+  </header>
+
+  <main id="app"></main>
+
+  <template id="tpl-home">
+    <section class="home">
+      <div class="hero">
+        <div class="hero-row">
+          <div class="hero-flag">🇨🇳</div>
+          <div>
+            <h2>Sẵn sàng đi Trung Quốc!</h2>
+            <p class="hero-sub">15 phút mỗi ngày · 10 ngày · tiếng Trung thực dụng cho khách du lịch</p>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div><strong id="days-left">—</strong><span>days to trip</span></div>
+          <div><strong id="words-learned">0</strong><span>words studied</span></div>
+          <div><strong id="streak">0</strong><span>day streak</span></div>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <strong>Tip:</strong> Many Chinese words are nearly identical to Vietnamese (Hán Việt). Look for the <span class="hv-pill">HV</span> badge — those are essentially free for you.
+      </div>
+
+      <h3 class="section-h">Your 10-day plan</h3>
+      <ol id="lesson-list" class="lesson-list"></ol>
+
+      <div class="util-row">
+        <button id="reset-btn" class="ghost-btn">Reset progress</button>
+      </div>
+    </section>
+  </template>
+
+  <template id="tpl-lesson">
+    <section class="lesson">
+      <div class="lesson-head">
+        <span class="day-pill" id="day-pill"></span>
+        <h2 id="lesson-title"></h2>
+        <p class="lesson-sub" id="lesson-sub"></p>
+      </div>
+
+      <div id="lesson-body"></div>
+
+      <div class="step-nav">
+        <button id="prev-step" class="ghost-btn">← Back</button>
+        <div class="progress-dots" id="progress-dots"></div>
+        <button id="next-step" class="primary-btn">Next →</button>
+      </div>
+    </section>
+  </template>
+
+  <template id="tpl-cheatsheet">
+    <section class="cheatsheet">
+      <h2>📋 Trip Cheat Sheet</h2>
+      <p class="cheat-sub">Mọi câu cần dùng, một trang. Bấm chữ Hán để nghe phát âm.</p>
+      <div id="cheat-body"></div>
+    </section>
+  </template>
+
+  <script src="lessons.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
