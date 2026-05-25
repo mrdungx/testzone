@@ -85,8 +85,8 @@ body {
 .brand-logo {
   height: 22px;
   width: auto;
-  color: var(--accent);
   flex-shrink: 0;
+  display: block;
 }
 
 .topbar h1 {

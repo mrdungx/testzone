@@ -118,6 +118,88 @@ jobs:
             echo "Config unchanged — nothing to commit."
           fi
 
+      - name: Fetch AhaSlides logo from public brand-assets page (best effort)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          LOGO_FILE=basic-mandarin-for-ahasliders/aha-logo.svg
+          BRAND_PAGE="https://ahaslides.com/about-us/brand-assets"
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+          # If the file is already the real (non-placeholder) logo, skip.
+          if [ -f "$LOGO_FILE" ] && ! grep -q 'aha</text>' "$LOGO_FILE"; then
+            echo "Logo file already populated from a previous run — skipping fetch."
+            exit 0
+          fi
+
+          echo "::group::Scraping $BRAND_PAGE"
+          HTML=$(curl -fsSL -A "$UA" --max-time 25 "$BRAND_PAGE" || echo "")
+          if [ -z "$HTML" ]; then
+            echo "Brand-assets page unreachable — keeping current placeholder."
+            exit 0
+          fi
+
+          # Pull every SVG URL we can find, then prefer one whose path mentions "logo".
+          ALL=$(printf '%s' "$HTML" | grep -oE 'https://[^"'"'"' ]+\.svg' | sort -u || true)
+          echo "All SVGs found:"
+          printf '%s\n' "$ALL"
+          PICK=$(printf '%s\n' "$ALL" | grep -i -E 'logo|ahaslide' | head -1 || true)
+          if [ -z "$PICK" ]; then
+            PICK=$(printf '%s\n' "$ALL" | head -1)
+          fi
+          echo "Picked: $PICK"
+          echo "::endgroup::"
+
+          if [ -z "$PICK" ]; then
+            echo "No SVG URL detected on brand page — keeping placeholder."
+            exit 0
+          fi
+
+          TMP=$(mktemp --suffix=.svg)
+          if curl -fsSL -A "$UA" --max-time 25 "$PICK" -o "$TMP"; then
+            # Reject obviously broken / non-SVG / huge payloads.
+            SIZE=$(wc -c < "$TMP")
+            if ! head -c 4096 "$TMP" | grep -qi '<svg'; then
+              echo "Downloaded file is not an SVG — discarding."
+              rm -f "$TMP"
+              exit 0
+            fi
+            if [ "$SIZE" -gt 200000 ]; then
+              echo "Downloaded SVG is suspiciously large ($SIZE bytes) — discarding."
+              rm -f "$TMP"
+              exit 0
+            fi
+            # Strip <script> tags as a precaution — we render with <img> so they wouldn't
+            # execute anyway, but cleaner to remove them.
+            python3 - "$TMP" "$LOGO_FILE" <<'PY'
+          import re, sys
+          src, dst = sys.argv[1], sys.argv[2]
+          with open(src, 'r', encoding='utf-8', errors='replace') as f:
+              s = f.read()
+          s = re.sub(r'<script[\s\S]*?</script>', '', s, flags=re.I)
+          s = re.sub(r'on[a-z]+\s*=\s*"[^"]*"', '', s, flags=re.I)
+          s = re.sub(r"on[a-z]+\s*=\s*'[^']*'", '', s, flags=re.I)
+          with open(dst, 'w', encoding='utf-8') as f:
+              f.write(s)
+          PY
+            echo "Logo saved ($(wc -c < "$LOGO_FILE") bytes) from $PICK"
+            rm -f "$TMP"
+          else
+            echo "Failed to download $PICK — keeping placeholder."
+            exit 0
+          fi
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          if ! git diff --quiet "$LOGO_FILE"; then
+            git add "$LOGO_FILE"
+            git commit -m "Pull official AhaSlides logo from brand-assets page"
+            git push
+          else
+            echo "Logo unchanged — nothing to commit."
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
