@@ -283,7 +283,7 @@
     });
 
     refreshLeaderboard(learner);
-    if (CONFIG.mode === 'shared') {
+    if (CONFIG.mode === 'firebase') {
       homePollHandle = setInterval(() => refreshLeaderboard(learner), POLL_INTERVAL_MS);
     }
   }
@@ -293,7 +293,7 @@
     const status = $('#learners-status');
     if (!el) return;
 
-    if (CONFIG.mode !== 'shared') {
+    if (CONFIG.mode !== 'firebase') {
       status.textContent = 'local mode';
       el.innerHTML = renderLeaderboardRows([currentLearner], currentLearner.id);
       return;
