@@ -87,31 +87,25 @@
     pushRemote(l);
   }
 
-  // ---------------- Remote sync (jsonblob / npoint / kvdb) ----------------
+  // ---------------- Remote sync (Firebase Realtime Database via REST) ----------------
 
-  function remoteUrl() {
-    if (CONFIG.mode !== 'shared' || !CONFIG.url) return null;
-    return CONFIG.url;
-  }
-
-  function writeMethod() {
-    // jsonblob requires PUT to update; npoint & kvdb accept POST.
-    return CONFIG.provider === 'jsonblob' ? 'PUT' : 'POST';
+  function remoteUrl(path) {
+    if (CONFIG.mode !== 'firebase' || !CONFIG.databaseURL) return null;
+    const base = CONFIG.databaseURL.replace(/\/$/, '');
+    return `${base}/${path}.json`;
   }
 
   let remoteCache = null;
 
   async function fetchRemote() {
-    const url = remoteUrl();
+    const url = remoteUrl('learners');
     if (!url) return {};
     try {
       const res = await fetch(url, { method: 'GET' });
       if (res.status === 404) return {};
       if (!res.ok) throw new Error('GET ' + res.status);
-      const text = await res.text();
-      if (!text) return {};
-      const parsed = JSON.parse(text);
-      remoteCache = (parsed && typeof parsed === 'object') ? parsed : {};
+      const data = await res.json();
+      remoteCache = (data && typeof data === 'object') ? data : {};
       return remoteCache;
     } catch (e) {
       console.warn('Leaderboard fetch failed:', e.message);
@@ -120,17 +114,15 @@
   }
 
   async function pushRemote(learner) {
-    const url = remoteUrl();
+    const url = remoteUrl(`learners/${learner.id}`);
     if (!url) return;
     try {
-      const current = await fetchRemote();
-      current[learner.id] = stripLearnerForRemote(learner);
       await fetch(url, {
-        method: writeMethod(),
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(current),
+        body: JSON.stringify(stripLearnerForRemote(learner)),
       });
-      remoteCache = current;
+      if (remoteCache) remoteCache[learner.id] = stripLearnerForRemote(learner);
     } catch (e) {
       console.warn('Leaderboard push failed:', e.message);
     }
