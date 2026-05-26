@@ -10,4 +10,7 @@
 //   };
 //
 // While mode is 'local', each device only sees its own learner on the board.
-window.APP_CONFIG = { mode: 'local' };
+window.APP_CONFIG = {
+  mode: 'firebase',
+  databaseURL: 'https://aha-quick-mandarin-default-rtdb.asia-southeast1.firebasedatabase.app/'
+};
