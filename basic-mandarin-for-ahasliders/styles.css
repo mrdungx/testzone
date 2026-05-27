@@ -45,6 +45,10 @@
 
 * { box-sizing: border-box; }
 
+html {
+  overflow-x: hidden;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -60,6 +64,8 @@ body {
   max-width: 720px;
   margin: 0 auto;
   padding-bottom: max(24px, env(safe-area-inset-bottom));
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .topbar {
@@ -93,6 +99,7 @@ body {
 
 .topbar h1 {
   margin: 0;
+  min-width: 0;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -431,6 +438,9 @@ main { padding: 16px; }
   cursor: pointer;
   user-select: none;
   display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .vocab-card .hanzi:active { color: var(--accent); }
@@ -524,6 +534,8 @@ main { padding: 16px; }
   font-weight: 500;
   color: var(--ink);
   margin: 4px 0 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .quiz-prompt.text-prompt {
