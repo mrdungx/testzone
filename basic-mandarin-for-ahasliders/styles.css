@@ -360,17 +360,22 @@ main { padding: 16px; }
 
 .step-nav .progress-dots {
   flex: 1;
+  min-width: 0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  align-content: center;
+  gap: 5px;
+  overflow: hidden;
 }
 
 .progress-dots span {
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--border);
   transition: background 0.15s;
+  flex-shrink: 0;
 }
 
 .progress-dots span.active { background: var(--accent); }
