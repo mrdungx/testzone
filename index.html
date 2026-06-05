@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shenzhen Travel Guide / Cẩm nang du lịch Thâm Quyến</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --ink:#e8eaed;
+    --muted:#9aa3b2;
+    --accent:#2dd4bf;
+    --accent-2:#f59e0b;
+    --line:#262b35;
+    --maxw:820px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans","Noto Sans Vietnamese",sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    font-size:18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(15,17,21,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .bar{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:12px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:.3px;
+    color:var(--ink);
+  }
+  .brand span{color:var(--accent);}
+  .toggle{
+    display:inline-flex;
+    border:1px solid var(--line);
+    border-radius:999px;
+    overflow:hidden;
+    background:var(--panel);
+  }
+  .toggle button{
+    appearance:none;
+    border:0;
+    background:transparent;
+    color:var(--muted);
+    padding:7px 16px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .toggle button.active{
+    background:var(--accent);
+    color:#06231f;
+  }
+  main{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:0 20px 80px;
+  }
+  .hero{
+    padding:56px 0 28px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:32px;
+  }
+  .hero .kicker{
+    color:var(--accent-2);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    font-size:13px;
+  }
+  h1{
+    font-size:40px;
+    line-height:1.15;
+    margin:10px 0 14px;
+  }
+  .lede{color:var(--muted);font-size:20px;margin:0;}
+  h2{
+    font-size:27px;
+    margin:48px 0 6px;
+    padding-top:8px;
+    border-top:1px solid var(--line);
+  }
+  h2:first-of-type{border-top:0;}
+  h3{font-size:20px;margin:28px 0 4px;color:var(--accent);}
+  p{margin:12px 0;}
+  ul,ol{margin:12px 0;padding-left:22px;}
+  li{margin:6px 0;}
+  a{color:var(--accent);}
+  strong{color:#fff;}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;
+  }
+  .chip{
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--muted);
+    padding:4px 12px;
+    border-radius:999px;
+    font-size:13px;
+  }
+  blockquote{
+    margin:18px 0;
+    padding:14px 18px;
+    background:var(--panel);
+    border-left:3px solid var(--accent-2);
+    border-radius:0 8px 8px 0;
+    color:var(--ink);
+  }
+  .toc{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .toc h4{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .toc ol{columns:2;column-gap:28px;margin:0;}
+  .toc a{text-decoration:none;}
+  .phrase-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:16px;}
+  .phrase-table th,.phrase-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+  .phrase-table th{background:var(--panel);color:var(--muted);font-weight:600;}
+  footer{
+    max-width:var(--maxw);margin:0 auto;padding:30px 20px 60px;
+    color:var(--muted);font-size:14px;border-top:1px solid var(--line);
+  }
+  .lang-vi{display:none;}
+  body.vi .lang-en{display:none;}
+  body.vi .lang-vi{display:block;}
+  body.vi li.lang-vi{display:list-item;}
+  body.vi tr.lang-vi{display:table-row;}
+  @media (max-width:560px){
+    body{font-size:17px;}
+    h1{font-size:31px;}
+    .toc ol{columns:1;}
+    .hero{padding:36px 0 22px;}
+  }
+</style>
+</head>
+<body class="en">
+<header>
+  <div class="bar">
+    <div class="brand">深圳 · <span>Shenzhen</span></div>
+    <div class="toggle" role="group" aria-label="Language switch">
+      <button id="btn-en" class="active" onclick="setLang('en')">English</button>
+      <button id="btn-vi" onclick="setLang('vi')">Tiếng Việt</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="kicker">
+      <span class="lang-en">In-flight reading</span>
+      <span class="lang-vi">Đọc trên chuyến bay</span>
+    </div>
+    <h1>
+      <span class="lang-en">Shenzhen: China's City from the Future</span>
+      <span class="lang-vi">Thâm Quyến: Thành phố đến từ tương lai của Trung Quốc</span>
+    </h1>
+    <p class="lede">
+      <span class="lang-en">A long-read companion for your flight — history, neighbourhoods, food, tech, money, and the practical know-how to land running.</span>
+      <span class="lang-vi">Bài đọc dài cho chuyến bay của bạn — lịch sử, các khu phố, ẩm thực, công nghệ, tiền bạc và những kinh nghiệm thực tế để bắt nhịp ngay khi hạ cánh.</span>
+    </p>
+    <div class="meta">
+      <span class="chip">🌆 <span class="lang-en">Guangdong, China</span><span class="lang-vi">Quảng Đông, Trung Quốc</span></span>
+      <span class="chip">👥 ~17.5M</span>
+      <span class="chip">🗣️ <span class="lang-en">Mandarin &amp; Cantonese</span><span class="lang-vi">Tiếng Quan Thoại &amp; Quảng Đông</span></span>
+      <span class="chip">💴 RMB (¥)</span>
+    </div>
+  </section>
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h4><span class="lang-en">Contents</span><span class="lang-vi">Mục lục</span></h4>
+    <ol>
+      <li><a href="#intro"><span class="lang-en">The 40-year miracle</span><span class="lang-vi">Kỳ tích 40 năm</span></a></li>
+      <li><a href="#history"><span class="lang-en">A short history</span><span class="lang-vi">Lịch sử tóm tắt</span></a></li>
+      <li><a href="#arriving"><span class="lang-en">Arriving &amp; getting around</span><span class="lang-vi">Đến nơi &amp; di chuyển</span></a></li>
+      <li><a href="#districts"><span class="lang-en">The districts</span><span class="lang-vi">Các quận</span></a></li>
+      <li><a href="#see"><span class="lang-en">What to see</span><span class="lang-vi">Điểm tham quan</span></a></li>
+      <li><a href="#tech"><span class="lang-en">Tech &amp; shopping</span><span class="lang-vi">Công nghệ &amp; mua sắm</span></a></li>
+      <li><a href="#food"><span class="lang-en">What to eat</span><span class="lang-vi">Ẩm thực</span></a></li>
+      <li><a href="#money"><span class="lang-en">Money, phones &amp; the wall</span><span class="lang-vi">Tiền, điện thoại &amp; tường lửa</span></a></li>
+      <li><a href="#etiquette"><span class="lang-en">Etiquette &amp; tips</span><span class="lang-vi">Phép lịch sự &amp; mẹo</span></a></li>
+      <li><a href="#daytrips"><span class="lang-en">Day trips</span><span class="lang-vi">Đi trong ngày</span></a></li>
+      <li><a href="#phrases"><span class="lang-en">Survival phrases</span><span class="lang-vi">Câu nói sinh tồn</span></a></li>
+    </ol>
+  </div>
+
+  <!-- 1 INTRO -->
+  <h2 id="intro"><span class="lang-en">The 40-year miracle</span><span class="lang-vi">Kỳ tích 40 năm</span></h2>
+  <div class="lang-en">
+    <p>Most great cities take centuries to become themselves. Shenzhen took about forty years. In 1980 this was a cluster of fishing and farming villages pressed up against the Hong Kong border, home to a few hundred thousand people. Today it is a metropolis of more than 17 million, the manufacturing and hardware capital of the planet, headquarters to Huawei, Tencent, BYD and DJI, and a skyline that did not exist when many of its own residents were born.</p>
+    <p>That speed is the single most important thing to understand about Shenzhen. Unlike Beijing or Xi'an, there are almost no ancient temples, no imperial walls, no centuries-old tea houses. What Shenzhen offers instead is a living portrait of what a city looks like when it is designed, more or less from scratch, for the 21st century: enormous parks threaded between glass towers, a metro system that grew from zero to one of the longest in the world in two decades, electric taxis and buses by default, and a culture of relentless, almost restless, forward motion.</p>
+    <p>It is also a city of migrants. Almost nobody in Shenzhen is <em>from</em> Shenzhen — people came from every province of China to build it, which gives the place an unusual openness, a willingness to try things, and a food scene that pulls from the entire country rather than just the Cantonese south. You are arriving in a place that is, in a very real sense, still under construction. Enjoy the energy of that.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Hầu hết các thành phố lớn cần hàng thế kỷ để trở thành chính mình. Thâm Quyến chỉ mất khoảng bốn mươi năm. Năm 1980, nơi đây chỉ là một cụm làng chài và làng nông giáp ranh giới Hồng Kông, với vài trăm nghìn dân. Ngày nay, đó là một đô thị hơn 17 triệu người, là thủ phủ sản xuất và phần cứng của hành tinh, trụ sở của Huawei, Tencent, BYD và DJI, với một đường chân trời chưa từng tồn tại khi nhiều cư dân của chính nó ra đời.</p>
+    <p>Tốc độ ấy là điều quan trọng nhất cần hiểu về Thâm Quyến. Khác với Bắc Kinh hay Tây An, ở đây gần như không có đền cổ, không có thành lũy đế vương, không có quán trà hàng trăm năm tuổi. Thay vào đó, Thâm Quyến cho bạn thấy một bức chân dung sống động về việc một thành phố trông ra sao khi được thiết kế gần như từ con số không cho thế kỷ 21: những công viên khổng lồ len lỏi giữa các tòa tháp kính, một hệ thống tàu điện ngầm phát triển từ con số 0 thành một trong những mạng lưới dài nhất thế giới chỉ trong hai thập kỷ, taxi và xe buýt điện là mặc định, cùng một văn hóa luôn tiến về phía trước không ngừng nghỉ.</p>
+    <p>Đây cũng là thành phố của những người nhập cư. Gần như không ai ở Thâm Quyến là người gốc Thâm Quyến — người ta đến từ mọi tỉnh thành của Trung Quốc để xây dựng nó, điều này tạo nên sự cởi mở khác thường, sự sẵn lòng thử nghiệm, và một nền ẩm thực hội tụ từ khắp cả nước chứ không chỉ riêng miền Quảng Đông. Bạn đang đến một nơi mà, theo đúng nghĩa đen, vẫn đang được xây dựng. Hãy tận hưởng nguồn năng lượng ấy.</p>
+  </div>
+
+  <!-- 2 HISTORY -->
+  <h2 id="history"><span class="lang-en">A short history</span><span class="lang-vi">Lịch sử tóm tắt</span></h2>
+  <div class="lang-en">
+    <p>The name "Shenzhen" first appears in records around 1410, referring to the drainage ditches ("zhen") in the paddy fields. For most of its history the area was unremarkable — a frontier of fishing villages and salt fields in the Pearl River Delta, overshadowed by nearby Guangzhou.</p>
+    <p>Everything changed in 1979–1980. China's leader Deng Xiaoping, looking for a way to test market reforms without risking the whole country, designated Shenzhen the nation's first <strong>Special Economic Zone</strong>. The logic was geographic: it sat right against capitalist Hong Kong, then still a British colony, and could borrow that city's capital, expertise and global connections. Factories went up, foreign investment poured in, and migrant workers arrived by the million. The phrase of the era was "Shenzhen speed" — at one point a new floor of a high-rise was reportedly completed every few days.</p>
+    <p>The first decades were about cheap manufacturing — toys, textiles, electronics assembled for Western brands. But over the 2000s and 2010s the city climbed the value chain dramatically. It stopped merely assembling other people's gadgets and started designing its own: telecoms giant Huawei, internet titan Tencent (maker of WeChat), the world's largest electric-vehicle maker BYD, and drone leader DJI all call Shenzhen home. The fishing village became, in a single lifetime, one of the most important technology cities on Earth.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Cái tên "Thâm Quyến" lần đầu xuất hiện trong sử sách khoảng năm 1410, ám chỉ những con mương ("quyến") trên các thửa ruộng. Trong phần lớn lịch sử, vùng này khá tầm thường — một vùng biên cương của làng chài và ruộng muối ở đồng bằng Châu Giang, bị lu mờ bởi Quảng Châu gần đó.</p>
+    <p>Mọi thứ thay đổi vào năm 1979–1980. Nhà lãnh đạo Đặng Tiểu Bình, khi tìm cách thử nghiệm cải cách thị trường mà không mạo hiểm cả nước, đã chọn Thâm Quyến làm <strong>Đặc khu Kinh tế</strong> đầu tiên của quốc gia. Lý do là về địa lý: nó nằm sát Hồng Kông tư bản, khi ấy còn là thuộc địa của Anh, và có thể mượn vốn, chuyên môn cùng các mối quan hệ toàn cầu của thành phố đó. Nhà máy mọc lên, đầu tư nước ngoài đổ vào, lao động nhập cư đến hàng triệu người. Câu nói của thời đại ấy là "tốc độ Thâm Quyến" — có thời điểm cứ vài ngày lại hoàn thành một tầng của tòa cao ốc.</p>
+    <p>Những thập kỷ đầu là về sản xuất giá rẻ — đồ chơi, dệt may, lắp ráp điện tử cho các thương hiệu phương Tây. Nhưng qua thập niên 2000 và 2010, thành phố leo lên chuỗi giá trị một cách ngoạn mục. Nó không còn chỉ lắp ráp thiết bị cho người khác mà bắt đầu tự thiết kế: gã khổng lồ viễn thông Huawei, ông lớn internet Tencent (cha đẻ của WeChat), hãng xe điện lớn nhất thế giới BYD, và hãng dẫn đầu về drone DJI đều đặt trụ sở tại Thâm Quyến. Làng chài đã trở thành, chỉ trong một đời người, một trong những thành phố công nghệ quan trọng nhất hành tinh.</p>
+  </div>
+
+  <!-- 3 ARRIVING -->
+  <h2 id="arriving"><span class="lang-en">Arriving &amp; getting around</span><span class="lang-vi">Đến nơi &amp; di chuyển</span></h2>
+  <h3><span class="lang-en">From the airport</span><span class="lang-vi">Từ sân bay</span></h3>
+  <div class="lang-en">
+    <p>You'll most likely land at <strong>Shenzhen Bao'an International Airport (SZX)</strong>, a striking white honeycomb terminal designed by the studio of Italian architect Massimiliano Fuksas — worth a look up as you walk through. It sits in the west of the city. Your options into town:</p>
+    <ul>
+      <li><strong>Metro Line 11</strong> runs directly from the airport — fast, cheap (a few yuan), and air-conditioned. It connects to the rest of the network for Futian and Luohu.</li>
+      <li><strong>Didi</strong> (China's Uber) or a taxi. A taxi to central Futian takes 30–50 minutes depending on traffic and costs roughly ¥100–140.</li>
+      <li><strong>Airport shuttle buses</strong> serve major hotels and districts if you prefer not to change trains with luggage.</li>
+    </ul>
+    <p>Note: some travellers arrive overland from Hong Kong via the border crossings at Futian, Luohu or Shenzhen Bay — a short, well-organised walk-through with separate Hong Kong and mainland immigration halls.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Nhiều khả năng bạn sẽ hạ cánh tại <strong>Sân bay Quốc tế Bảo An Thâm Quyến (SZX)</strong>, một nhà ga hình tổ ong màu trắng ấn tượng do studio của kiến trúc sư người Ý Massimiliano Fuksas thiết kế — đáng để ngước nhìn khi bạn đi qua. Sân bay nằm ở phía tây thành phố. Các lựa chọn vào trung tâm:</p>
+    <ul>
+      <li><strong>Tàu điện ngầm tuyến 11</strong> chạy thẳng từ sân bay — nhanh, rẻ (vài tệ) và có điều hòa. Nó kết nối với phần còn lại của mạng lưới đến Phúc Điền và La Hồ.</li>
+      <li><strong>Didi</strong> (Uber của Trung Quốc) hoặc taxi. Taxi đến trung tâm Phúc Điền mất 30–50 phút tùy giao thông, giá khoảng ¥100–140.</li>
+      <li><strong>Xe buýt đưa đón sân bay</strong> phục vụ các khách sạn và quận lớn nếu bạn không muốn đổi tàu khi mang hành lý.</li>
+    </ul>
+    <p>Lưu ý: một số du khách đến bằng đường bộ từ Hồng Kông qua các cửa khẩu Phúc Điền, La Hồ hoặc Vịnh Thâm Quyến — một lối đi bộ ngắn, được tổ chức tốt với sảnh xuất nhập cảnh riêng của Hồng Kông và đại lục.</p>
+  </div>
+
+  <h3><span class="lang-en">The metro is your best friend</span><span class="lang-vi">Tàu điện ngầm là bạn thân của bạn</span></h3>
+  <div class="lang-en">
+    <p>Shenzhen's metro is clean, fast, cheap, signed in English, and now spans well over a dozen lines reaching almost everywhere a visitor wants to go. You do not need to buy paper tickets:</p>
+    <ul>
+      <li><strong>Easiest:</strong> add a transit card to your phone, or scan the <strong>Shenzhen Metro QR code</strong> through WeChat or Alipay (see the money section). Tap your phone at the gate.</li>
+      <li><strong>Or</strong> buy a rechargeable <strong>Shenzhen Tong</strong> card, which also works on buses and many taxis.</li>
+    </ul>
+    <p>Trains run roughly 06:30 to 23:00. Avoid the 08:00–09:30 and 18:00–19:30 crush if you can — this is a city of commuters.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Tàu điện ngầm Thâm Quyến sạch sẽ, nhanh, rẻ, có biển báo tiếng Anh, và nay có hơn một chục tuyến vươn tới gần như mọi nơi du khách muốn đến. Bạn không cần mua vé giấy:</p>
+    <ul>
+      <li><strong>Dễ nhất:</strong> thêm thẻ giao thông vào điện thoại, hoặc quét <strong>mã QR Metro Thâm Quyến</strong> qua WeChat hoặc Alipay (xem mục tiền). Chạm điện thoại vào cổng.</li>
+      <li><strong>Hoặc</strong> mua thẻ nạp tiền <strong>Shenzhen Tong</strong>, dùng được cả trên xe buýt và nhiều taxi.</li>
+    </ul>
+    <p>Tàu chạy khoảng 06:30 đến 23:00. Nếu có thể, hãy tránh giờ cao điểm 08:00–09:30 và 18:00–19:30 — đây là thành phố của những người đi làm.</p>
+  </div>
+
+  <!-- 4 DISTRICTS -->
+  <h2 id="districts"><span class="lang-en">The districts: getting your bearings</span><span class="lang-vi">Các quận: định hướng</span></h2>
+  <div class="lang-en">
+    <p>Shenzhen is long and thin, running roughly east–west along the Hong Kong border. A quick mental map:</p>
+    <ul>
+      <li><strong>Futian (福田)</strong> — the central business district and de facto downtown. Government buildings, the Civic Center, the convention centre, Lianhua Hill Park, and most international hotels. If you only have one base, base here.</li>
+      <li><strong>Luohu / Lowu (罗湖)</strong> — the original commercial heart and the main land crossing to Hong Kong. Older, busier, cheaper. Famous (and infamous) for the wholesale markets at the Luohu Commercial City by the border.</li>
+      <li><strong>Nanshan (南山)</strong> — the tech west: Tencent's HQ, the Shenzhen Bay waterfront, Houhai's gleaming towers, the universities, and the OCT cultural-tourism cluster. Younger, greener, more affluent.</li>
+      <li><strong>Bao'an (宝安)</strong> — the airport district and a vast manufacturing belt now sprouting its own shiny CBD along the coast.</li>
+      <li><strong>Longgang &amp; Longhua (龙岗 / 龙华)</strong> — sprawling northern districts, more residential and industrial, home to Huawei's headquarters in Longgang's Bantian area.</li>
+      <li><strong>Yantian (盐田)</strong> — the eastern coast: container port, plus the beach resorts of Dameisha and Xiaomeisha.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <p>Thâm Quyến dài và hẹp, chạy theo hướng đông–tây dọc biên giới Hồng Kông. Một bản đồ nhanh trong đầu:</p>
+    <ul>
+      <li><strong>Phúc Điền (福田)</strong> — khu trung tâm thương mại và trung tâm thành phố trên thực tế. Các tòa nhà chính quyền, Trung tâm Hành chính, trung tâm hội nghị, công viên đồi Liên Hoa, và phần lớn khách sạn quốc tế. Nếu chỉ chọn một nơi lưu trú, hãy chọn đây.</li>
+      <li><strong>La Hồ (罗湖)</strong> — trái tim thương mại nguyên thủy và cửa khẩu đường bộ chính sang Hồng Kông. Cổ hơn, đông hơn, rẻ hơn. Nổi tiếng (và tai tiếng) với các chợ bán sỉ ở Luohu Commercial City sát biên giới.</li>
+      <li><strong>Nam Sơn (南山)</strong> — phía tây công nghệ: trụ sở Tencent, bờ vịnh Thâm Quyến, các tòa tháp lấp lánh ở Hậu Hải, các trường đại học, và cụm văn hóa-du lịch OCT. Trẻ trung hơn, xanh hơn, sung túc hơn.</li>
+      <li><strong>Bảo An (宝安)</strong> — quận sân bay và một vành đai sản xuất rộng lớn nay đang mọc lên khu CBD lấp lánh của riêng mình dọc bờ biển.</li>
+      <li><strong>Long Cương &amp; Long Hoa (龙岗 / 龙华)</strong> — các quận phía bắc trải rộng, mang tính dân cư và công nghiệp nhiều hơn, là nơi đặt trụ sở Huawei ở khu Bantian, Long Cương.</li>
+      <li><strong>Diêm Điền (盐田)</strong> — bờ biển phía đông: cảng container, cùng các khu nghỉ dưỡng bãi biển Đại Mai Sa và Tiểu Mai Sa.</li>
+    </ul>
+  </div>
+
+  <!-- 5 SEE -->
+  <h2 id="see"><span class="lang-en">What to see</span><span class="lang-vi">Điểm tham quan</span></h2>
+
+  <h3><span class="lang-en">OCT &amp; the theme parks</span><span class="lang-vi">OCT &amp; các công viên chủ đề</span></h3>
+  <div class="lang-en">
+    <p>The <strong>Overseas Chinese Town (OCT)</strong> area in Nanshan is the closest thing Shenzhen has to a classic tourist quarter. Here you'll find <strong>Window of the World</strong>, a park of scaled-down global landmarks — a 108-metre Eiffel Tower, a mini Taj Mahal, pyramids — that is gloriously kitsch and genuinely fun at night. Next door, <strong>Splendid China &amp; the China Folk Culture Villages</strong> miniaturise the whole country's monuments and stage ethnic-minority performances. <strong>Happy Valley</strong> is the big-thrill amusement park. Threaded through it all is <strong>OCT-LOFT</strong>, a converted-factory creative district full of cafés, design shops, indie bookstores and galleries — the hipster heart of the city.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Khu <strong>Hoa Kiều Thành (OCT)</strong> ở Nam Sơn là thứ gần nhất với một khu du lịch cổ điển mà Thâm Quyến có. Tại đây bạn sẽ thấy <strong>Cửa sổ Thế giới (Window of the World)</strong>, một công viên thu nhỏ các kỳ quan toàn cầu — tháp Eiffel cao 108 mét, đền Taj Mahal mini, các kim tự tháp — vừa hào nhoáng "kitsch" vừa thực sự vui vào ban đêm. Kế bên, <strong>Cẩm Tú Trung Hoa &amp; Làng Văn hóa Dân tộc</strong> thu nhỏ các công trình của cả nước và biểu diễn nghệ thuật của các dân tộc thiểu số. <strong>Happy Valley</strong> là công viên giải trí cảm giác mạnh. Xuyên suốt tất cả là <strong>OCT-LOFT</strong>, một khu sáng tạo cải tạo từ nhà máy đầy quán cà phê, cửa hàng thiết kế, hiệu sách độc lập và phòng tranh — trái tim "hipster" của thành phố.</p>
+  </div>
+
+  <h3><span class="lang-en">Parks, towers &amp; the waterfront</span><span class="lang-vi">Công viên, tháp &amp; bờ vịnh</span></h3>
+  <div class="lang-en">
+    <ul>
+      <li><strong>Ping An Finance Centre</strong> — at 599 m, one of the tallest buildings on Earth. Its observation deck, "Free Sky", on the 116th floor gives you the whole city laid out below.</li>
+      <li><strong>Lianhuashan (Lotus Hill) Park</strong> — climb the gentle hill in Futian for the postcard view straight down the central axis to the skyline, past the bronze statue of Deng Xiaoping. Locals fly kites here at weekends.</li>
+      <li><strong>Shenzhen Bay Park &amp; Talent Park</strong> — a long, breezy waterfront promenade in Nanshan facing Hong Kong across the bay, full of cyclists, joggers and egrets. Lovely at sunset.</li>
+      <li><strong>Lianhua / Bijiashan</strong> and the city's many green hills — Shenzhen is one of the greenest big cities in China, with parks never far away.</li>
+      <li><strong>Dameisha &amp; Xiaomeisha beaches</strong> in the east for sand and sea on a hot day.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <ul>
+      <li><strong>Trung tâm Tài chính Bình An (Ping An)</strong> — cao 599 m, một trong những tòa nhà cao nhất hành tinh. Đài quan sát "Free Sky" ở tầng 116 cho bạn nhìn toàn thành phố trải dưới chân.</li>
+      <li><strong>Công viên đồi Liên Hoa (Lotus Hill)</strong> — leo ngọn đồi thoai thoải ở Phúc Điền để có khung cảnh bưu thiếp nhìn thẳng dọc trục trung tâm ra đường chân trời, ngang qua tượng đồng Đặng Tiểu Bình. Người dân thả diều ở đây vào cuối tuần.</li>
+      <li><strong>Công viên Vịnh Thâm Quyến &amp; Công viên Nhân Tài</strong> — một lối đi dạo ven biển dài, lộng gió ở Nam Sơn nhìn sang Hồng Kông qua vịnh, đầy người đạp xe, chạy bộ và cò trắng. Tuyệt đẹp lúc hoàng hôn.</li>
+      <li><strong>Liên Hoa / Bút Giá Sơn</strong> và vô số đồi xanh của thành phố — Thâm Quyến là một trong những đô thị lớn xanh nhất Trung Quốc, công viên luôn ở gần.</li>
+      <li><strong>Bãi biển Đại Mai Sa &amp; Tiểu Mai Sa</strong> ở phía đông cho ngày nắng nóng với cát và biển.</li>
+    </ul>
+  </div>
+
+  <h3><span class="lang-en">Culture &amp; the offbeat</span><span class="lang-vi">Văn hóa &amp; điều khác lạ</span></h3>
+  <div class="lang-en">
+    <ul>
+      <li><strong>Dafen Oil Painting Village</strong> — a remarkable district where, at its peak, a large share of the world's reproduction oil paintings were hand-copied. You can watch artists at work and commission your own canvas.</li>
+      <li><strong>Nantou Ancient Town</strong> — a rare pocket of genuine history, a restored walled town that predates modern Shenzhen by centuries, now full of boutiques and cafés.</li>
+      <li><strong>Dapeng Fortress (Dapeng Suocheng)</strong> — a Ming-dynasty garrison town on the eastern peninsula, the best preserved old architecture in the region and a great half-day escape.</li>
+      <li><strong>Sea World (Shekou)</strong> — a lively expat-friendly plaza built around the <em>Minghua</em>, a retired cruise ship, with bars, fountains and restaurants.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <ul>
+      <li><strong>Làng tranh sơn dầu Đại Phân (Dafen)</strong> — một khu phố đáng kinh ngạc, nơi vào thời đỉnh cao, một phần lớn tranh sơn dầu sao chép của thế giới được chép tay. Bạn có thể xem nghệ sĩ làm việc và đặt vẽ bức tranh của riêng mình.</li>
+      <li><strong>Phố cổ Nam Đầu (Nantou)</strong> — một góc lịch sử thật hiếm hoi, một thị trấn có tường thành được phục dựng có trước Thâm Quyến hiện đại hàng thế kỷ, nay đầy cửa hàng và quán cà phê.</li>
+      <li><strong>Thành cổ Đại Bằng (Dapeng Suocheng)</strong> — một thị trấn đồn trú thời nhà Minh trên bán đảo phía đông, kiến trúc cổ được bảo tồn tốt nhất trong vùng và là chuyến trốn nửa ngày tuyệt vời.</li>
+      <li><strong>Sea World (Xà Khẩu)</strong> — một quảng trường sôi động thân thiện với người nước ngoài, xây quanh tàu du lịch về hưu <em>Minghua</em>, với quán bar, đài phun nước và nhà hàng.</li>
+    </ul>
+  </div>
+
+  <!-- 6 TECH -->
+  <h2 id="tech"><span class="lang-en">Tech &amp; shopping</span><span class="lang-vi">Công nghệ &amp; mua sắm</span></h2>
+  <div class="lang-en">
+    <p><strong>Huaqiangbei (华强北)</strong> in Futian is the reason many people come to Shenzhen at all. It is the largest electronics marketplace on the planet — block after block of multi-storey malls (the SEG Electronics Market is the legendary one) packed with stalls selling every component, chip, cable, phone, gadget, repair part and prototype tool imaginable. Even if you buy nothing, walking it is a pilgrimage for anyone interested in how the modern world is physically made. Bargain politely, and assume cash or mobile pay only.</p>
+    <p>For more conventional retail therapy, the city has lavish malls: <strong>MixC (万象城)</strong>, <strong>Coco Park</strong>, <strong>The MixC World</strong>, and the luxury floors around Ping An and the Futian CBD. Shenzhen is also a great place to buy electric-vehicle culture, drones (DJI's flagship store), and the latest Chinese consumer tech, often before it reaches the rest of the world.</p>
+  </div>
+  <div class="lang-vi">
+    <p><strong>Hoa Cường Bắc (华强北)</strong> ở Phúc Điền là lý do nhiều người đến Thâm Quyến. Đây là chợ điện tử lớn nhất hành tinh — hết dãy nhà này đến dãy nhà khác là các trung tâm thương mại nhiều tầng (chợ điện tử SEG là nơi huyền thoại) chật kín quầy bán mọi linh kiện, chip, cáp, điện thoại, thiết bị, phụ tùng sửa chữa và công cụ tạo mẫu mà bạn có thể tưởng tượng. Dù không mua gì, dạo qua đây cũng là một cuộc hành hương cho bất kỳ ai quan tâm đến cách thế giới hiện đại được tạo ra về mặt vật chất. Hãy mặc cả lịch sự, và giả định chỉ nhận tiền mặt hoặc thanh toán di động.</p>
+    <p>Để mua sắm theo kiểu truyền thống hơn, thành phố có các trung tâm thương mại xa hoa: <strong>MixC (万象城)</strong>, <strong>Coco Park</strong>, <strong>The MixC World</strong>, và các tầng hàng hiệu quanh Bình An và CBD Phúc Điền. Thâm Quyến cũng là nơi tuyệt vời để trải nghiệm văn hóa xe điện, drone (cửa hàng flagship của DJI), và công nghệ tiêu dùng Trung Quốc mới nhất, thường trước khi nó đến phần còn lại của thế giới.</p>
+  </div>
+
+  <!-- 7 FOOD -->
+  <h2 id="food"><span class="lang-en">What to eat</span><span class="lang-vi">Ẩm thực</span></h2>
+  <div class="lang-en">
+    <p>Because everyone here is from somewhere else, Shenzhen's food map is really a map of China. But you are in <strong>Cantonese (Guangdong) territory</strong>, so start there:</p>
+    <ul>
+      <li><strong>Dim sum / yum cha (饮茶)</strong> — the morning ritual of small steamed and fried dishes with tea: shrimp dumplings (har gow), barbecue pork buns (char siu bao), rice rolls (cheung fun), egg tarts. A long, leisurely brunch is the local way.</li>
+      <li><strong>Cantonese roast meats</strong> — glistening char siu pork, crispy-skin roast goose and duck, soy-sauce chicken, hung in the windows of <em>siu mei</em> shops.</li>
+      <li><strong>Seafood</strong> — steamed fish, clams, prawns; the coastal Cantonese style is light and fresh, letting the ingredient speak.</li>
+      <li><strong>Hakka cuisine</strong> — the heartier hill-country cooking of the region: salt-baked chicken, stuffed tofu (yong tau foo), braised pork with preserved vegetables.</li>
+      <li><strong>Congee &amp; soup</strong> — Cantonese slow-simmered soups (老火汤) are practically medicine here, and silky congee is a comfort at any hour.</li>
+    </ul>
+    <p>Beyond Cantonese, you can eat your way across the country without leaving the city: numbing Sichuan hotpot, hand-pulled Lanzhou beef noodles, Hunan chilli, northeastern dumplings, and a young, booming café and craft scene. Don't skip the night markets and the food courts in the basements of the big malls — often the best value and most fun. <strong>Dongmen (东门)</strong> in Luohu is the classic bustling street-food and shopping warren.</p>
+  </div>
+  <div class="lang-vi">
+    <p>Vì ai ở đây cũng đến từ nơi khác, bản đồ ẩm thực Thâm Quyến thực ra là bản đồ của cả Trung Quốc. Nhưng bạn đang ở <strong>vùng đất Quảng Đông (Cantonese)</strong>, nên hãy bắt đầu từ đó:</p>
+    <ul>
+      <li><strong>Dim sum / ẩm trà (饮茶)</strong> — nghi thức buổi sáng với các món hấp và chiên nhỏ dùng kèm trà: há cảo tôm (har gow), bánh bao xá xíu (char siu bao), bánh cuốn (cheung fun), bánh trứng. Một bữa brunch dài thong thả là cách của người địa phương.</li>
+      <li><strong>Thịt quay Quảng Đông</strong> — xá xíu bóng mỡ, ngỗng và vịt quay da giòn, gà sốt xì dầu, treo trong cửa kính các tiệm <em>siu mei</em>.</li>
+      <li><strong>Hải sản</strong> — cá hấp, nghêu, tôm; phong cách Quảng Đông ven biển nhẹ nhàng và tươi, để nguyên liệu lên tiếng.</li>
+      <li><strong>Ẩm thực Khách Gia (Hakka)</strong> — lối nấu đậm đà vùng đồi núi: gà nướng muối, đậu phụ nhồi (yong tau foo), thịt kho rau cải muối.</li>
+      <li><strong>Cháo &amp; canh</strong> — các loại canh hầm lâu kiểu Quảng Đông (老火汤) ở đây gần như là thuốc bổ, và cháo mịn là món an ủi vào bất cứ giờ nào.</li>
+    </ul>
+    <p>Ngoài món Quảng Đông, bạn có thể ăn xuyên cả nước mà không cần rời thành phố: lẩu Tứ Xuyên tê cay, mì bò Lan Châu kéo tay, ớt Hồ Nam, sủi cảo Đông Bắc, cùng một làn sóng quán cà phê và đồ thủ công trẻ trung đang bùng nổ. Đừng bỏ qua chợ đêm và khu ẩm thực ở tầng hầm các trung tâm thương mại lớn — thường ngon, rẻ và vui nhất. <strong>Đông Môn (东门)</strong> ở La Hồ là khu phố ẩm thực đường phố và mua sắm nhộn nhịp kinh điển.</p>
+  </div>
+
+  <!-- 8 MONEY -->
+  <h2 id="money"><span class="lang-en">Money, phones &amp; the wall</span><span class="lang-vi">Tiền, điện thoại &amp; tường lửa</span></h2>
+  <blockquote>
+    <span class="lang-en"><strong>The single most important tip:</strong> set up mobile payments before you need them. Shenzhen is almost entirely cashless, and many shops no longer keep change.</span>
+    <span class="lang-vi"><strong>Mẹo quan trọng nhất:</strong> cài đặt thanh toán di động trước khi bạn cần đến. Thâm Quyến gần như hoàn toàn không dùng tiền mặt, và nhiều cửa hàng không còn giữ tiền thối.</span>
+  </blockquote>
+  <div class="lang-en">
+    <ul>
+      <li><strong>WeChat Pay &amp; Alipay</strong> run everything — restaurants, taxis, metro, street stalls, vending machines. Both now let foreign visitors link an international Visa/Mastercard. Set this up at home, verify your ID in the app, and test it before you fly.</li>
+      <li><strong>Cash</strong> still legally must be accepted, and keeping a few hundred yuan as backup is wise, but expect blank looks at small vendors.</li>
+      <li><strong>Cards:</strong> international credit cards work at big hotels and upscale malls but are useless at most small businesses. Bring a card mainly for hotels and emergencies.</li>
+      <li><strong>The Great Firewall:</strong> Google, Gmail, WhatsApp, Instagram, Facebook, YouTube, X and many Western sites are blocked on local networks. If you need them, install and <em>test</em> a reputable VPN <strong>before</strong> you arrive — you usually cannot download one once you're inside. International roaming routed through your home carrier often bypasses the block.</li>
+      <li><strong>Maps:</strong> Google Maps is unreliable here. <strong>Apple Maps</strong> works reasonably; locals use <strong>Amap (高德)</strong> or Baidu Maps. <strong>WeChat</strong> is essential for everything from payments to translation to mini-programs.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <ul>
+      <li><strong>WeChat Pay &amp; Alipay</strong> điều hành mọi thứ — nhà hàng, taxi, tàu điện, quầy hàng rong, máy bán hàng tự động. Cả hai nay cho phép du khách nước ngoài liên kết thẻ Visa/Mastercard quốc tế. Hãy cài đặt ở nhà, xác minh danh tính trong ứng dụng, và thử nghiệm trước khi bay.</li>
+      <li><strong>Tiền mặt</strong> theo luật vẫn phải được chấp nhận, và giữ vài trăm tệ dự phòng là khôn ngoan, nhưng đừng ngạc nhiên nếu người bán nhỏ lẻ ngơ ngác.</li>
+      <li><strong>Thẻ:</strong> thẻ tín dụng quốc tế dùng được ở khách sạn lớn và trung tâm thương mại cao cấp nhưng vô dụng ở hầu hết cửa hàng nhỏ. Hãy mang thẻ chủ yếu cho khách sạn và trường hợp khẩn cấp.</li>
+      <li><strong>Tường lửa (Great Firewall):</strong> Google, Gmail, WhatsApp, Instagram, Facebook, YouTube, X và nhiều trang phương Tây bị chặn trên mạng nội địa. Nếu cần, hãy cài và <em>thử</em> một VPN uy tín <strong>trước khi</strong> đến — thường bạn không thể tải sau khi đã vào trong. Chuyển vùng quốc tế qua nhà mạng quê nhà thường vượt được rào chặn.</li>
+      <li><strong>Bản đồ:</strong> Google Maps không đáng tin ở đây. <strong>Apple Maps</strong> hoạt động tạm ổn; người địa phương dùng <strong>Amap (高德)</strong> hoặc Baidu Maps. <strong>WeChat</strong> là thiết yếu cho mọi thứ từ thanh toán đến dịch thuật đến mini-program.</li>
+    </ul>
+  </div>
+
+  <!-- 9 ETIQUETTE -->
+  <h2 id="etiquette"><span class="lang-en">Etiquette &amp; practical tips</span><span class="lang-vi">Phép lịch sự &amp; mẹo thực tế</span></h2>
+  <div class="lang-en">
+    <ul>
+      <li><strong>Visas &amp; transit:</strong> check the current rules for your nationality. China has been expanding visa-free transit and Greater Bay Area entry schemes — but verify well before you travel, as policies shift.</li>
+      <li><strong>Weather:</strong> subtropical and humid. Summers (May–Sept) are hot, sticky and rainy with occasional typhoons; bring light clothes and an umbrella. Autumn and early winter are mild and pleasant. Indoor air-conditioning can be fierce — carry a light layer.</li>
+      <li><strong>Tipping</strong> is not customary and not expected.</li>
+      <li><strong>Translation:</strong> download offline translation and a Mandarin pack. The WeChat scan-translate and apps like Pleco or Google Translate (with VPN) bridge most gaps. Few people outside hotels and tech offices speak fluent English.</li>
+      <li><strong>Queuing &amp; metro security:</strong> bags are X-rayed entering every metro station — factor a minute in. Keep liquids accessible.</li>
+      <li><strong>Tap water</strong> is not for drinking — stick to bottled or boiled water, which is everywhere.</li>
+      <li><strong>Safety:</strong> Shenzhen is very safe, including late at night, with low street crime and a heavy, orderly public presence. Normal big-city common sense is plenty.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <ul>
+      <li><strong>Thị thực &amp; quá cảnh:</strong> hãy kiểm tra quy định hiện hành cho quốc tịch của bạn. Trung Quốc đang mở rộng các chương trình quá cảnh miễn thị thực và nhập cảnh Vùng Vịnh Lớn — nhưng hãy xác minh kỹ trước khi đi, vì chính sách thay đổi.</li>
+      <li><strong>Thời tiết:</strong> cận nhiệt đới và ẩm. Mùa hè (tháng 5–9) nóng, oi và nhiều mưa, thi thoảng có bão; hãy mang quần áo nhẹ và ô. Mùa thu và đầu đông dịu mát, dễ chịu. Điều hòa trong nhà có thể rất lạnh — mang theo một lớp áo mỏng.</li>
+      <li><strong>Tiền boa (tip)</strong> không phải thông lệ và không được mong đợi.</li>
+      <li><strong>Dịch thuật:</strong> tải bản dịch ngoại tuyến và gói tiếng Quan Thoại. Tính năng quét-dịch của WeChat và các ứng dụng như Pleco hay Google Translate (cần VPN) lấp phần lớn khoảng cách. Ít người ngoài khách sạn và văn phòng công nghệ nói tiếng Anh trôi chảy.</li>
+      <li><strong>Xếp hàng &amp; an ninh tàu điện:</strong> túi xách bị soi chiếu khi vào mỗi ga tàu — hãy tính thêm một phút. Để chất lỏng ở chỗ dễ lấy.</li>
+      <li><strong>Nước máy</strong> không dùng để uống — hãy dùng nước đóng chai hoặc nước đun sôi, có ở khắp nơi.</li>
+      <li><strong>An toàn:</strong> Thâm Quyến rất an toàn, kể cả đêm khuya, tội phạm đường phố thấp và lực lượng công cộng đông, trật tự. Chỉ cần sự cẩn trọng thông thường của đô thị lớn là đủ.</li>
+    </ul>
+  </div>
+
+  <!-- 10 DAYTRIPS -->
+  <h2 id="daytrips"><span class="lang-en">Day trips</span><span class="lang-vi">Đi trong ngày</span></h2>
+  <div class="lang-en">
+    <ul>
+      <li><strong>Hong Kong</strong> is right next door. Walk across at Futian, Luohu or take the high-speed rail from Futian Station to Hong Kong West Kowloon in about 15–20 minutes. Note you'll pass a full international border — bring your passport and check visa requirements for both sides.</li>
+      <li><strong>Guangzhou</strong>, the sprawling Cantonese provincial capital, is around 30–40 minutes by high-speed train — older, more traditional, with superb food and the Canton Tower.</li>
+      <li><strong>Eastern Shenzhen &amp; the Dapeng Peninsula</strong> — beaches, the old fortress town, hiking and seafood villages, a world away from the towers in under two hours.</li>
+    </ul>
+  </div>
+  <div class="lang-vi">
+    <ul>
+      <li><strong>Hồng Kông</strong> ngay sát bên. Đi bộ qua tại Phúc Điền, La Hồ hoặc đi tàu cao tốc từ ga Phúc Điền đến Tây Cửu Long (Hồng Kông) trong khoảng 15–20 phút. Lưu ý bạn sẽ qua một biên giới quốc tế đầy đủ — hãy mang hộ chiếu và kiểm tra yêu cầu thị thực cho cả hai phía.</li>
+      <li><strong>Quảng Châu</strong>, thủ phủ trải rộng của tỉnh Quảng Đông, cách khoảng 30–40 phút bằng tàu cao tốc — cổ kính hơn, truyền thống hơn, với ẩm thực tuyệt vời và tháp Quảng Châu (Canton Tower).</li>
+      <li><strong>Đông Thâm Quyến &amp; bán đảo Đại Bằng</strong> — bãi biển, thị trấn pháo đài cổ, đi bộ đường dài và các làng hải sản, một thế giới khác xa các tòa tháp, chỉ trong chưa đầy hai giờ.</li>
+    </ul>
+  </div>
+
+  <!-- 11 PHRASES -->
+  <h2 id="phrases"><span class="lang-en">Survival phrases (Mandarin)</span><span class="lang-vi">Câu nói sinh tồn (tiếng Quan Thoại)</span></h2>
+  <table class="phrase-table">
+    <thead>
+      <tr>
+        <th><span class="lang-en">Meaning</span><span class="lang-vi">Nghĩa</span></th>
+        <th>中文</th>
+        <th>Pinyin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="lang-en">Hello</span><span class="lang-vi">Xin chào</span></td><td>你好</td><td>Nǐ hǎo</td></tr>
+      <tr><td><span class="lang-en">Thank you</span><span class="lang-vi">Cảm ơn</span></td><td>谢谢</td><td>Xièxie</td></tr>
+      <tr><td><span class="lang-en">How much?</span><span class="lang-vi">Bao nhiêu tiền?</span></td><td>多少钱？</td><td>Duōshǎo qián?</td></tr>
+      <tr><td><span class="lang-en">Too expensive</span><span class="lang-vi">Đắt quá</span></td><td>太贵了</td><td>Tài guì le</td></tr>
+      <tr><td><span class="lang-en">I don't understand</span><span class="lang-vi">Tôi không hiểu</span></td><td>我听不懂</td><td>Wǒ tīng bu dǒng</td></tr>
+      <tr><td><span class="lang-en">Can I pay by WeChat/Alipay?</span><span class="lang-vi">Tôi trả bằng WeChat/Alipay được không?</span></td><td>可以用微信/支付宝吗？</td><td>Kěyǐ yòng Wēixìn / Zhīfùbǎo ma?</td></tr>
+      <tr><td><span class="lang-en">Where is the toilet?</span><span class="lang-vi">Nhà vệ sinh ở đâu?</span></td><td>洗手间在哪里？</td><td>Xǐshǒujiān zài nǎlǐ?</td></tr>
+      <tr><td><span class="lang-en">Not spicy, please</span><span class="lang-vi">Xin đừng cay</span></td><td>不要辣</td><td>Bùyào là</td></tr>
+      <tr><td><span class="lang-en">The bill, please</span><span class="lang-vi">Tính tiền</span></td><td>买单</td><td>Mǎidān</td></tr>
+      <tr><td><span class="lang-en">Airport</span><span class="lang-vi">Sân bay</span></td><td>机场</td><td>Jīchǎng</td></tr>
+    </tbody>
+  </table>
+
+  <div class="lang-en">
+    <p style="margin-top:36px;color:var(--muted);"><em>Have a wonderful trip. Shenzhen rewards the curious — get a little lost, eat the thing you can't identify, ride the metro to a random green dot on the map, and watch a city that is still inventing itself.</em></p>
+  </div>
+  <div class="lang-vi">
+    <p style="margin-top:36px;color:var(--muted);"><em>Chúc bạn một chuyến đi tuyệt vời. Thâm Quyến hậu đãi những người tò mò — hãy lạc một chút, ăn món bạn không gọi tên được, đi tàu điện đến một chấm xanh ngẫu nhiên trên bản đồ, và ngắm một thành phố vẫn đang tự tái tạo chính mình.</em></p>
+  </div>
+</main>
+
+<footer>
+  <span class="lang-en">Shenzhen in-flight reading guide · Use the switch at the top to read in English or Vietnamese · Details such as visas, transit rules and opening times change — verify time-sensitive specifics before you rely on them.</span>
+  <span class="lang-vi">Cẩm nang đọc trên chuyến bay về Thâm Quyến · Dùng nút chuyển ở phía trên để đọc bằng tiếng Anh hoặc tiếng Việt · Các chi tiết như thị thực, quy định quá cảnh và giờ mở cửa có thể thay đổi — hãy xác minh những thông tin nhạy cảm về thời gian trước khi dựa vào chúng.</span>
+</footer>
+
+<script>
+  function setLang(lang){
+    document.body.classList.remove('en','vi');
+    document.body.classList.add(lang);
+    document.documentElement.lang = (lang === 'vi') ? 'vi' : 'en';
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
+    try { localStorage.setItem('sz-lang', lang); } catch(e){}
+  }
+  (function(){
+    var saved = 'en';
+    try { saved = localStorage.getItem('sz-lang') || 'en'; } catch(e){}
+    setLang(saved);
+  })();
+</script>
+</body>
+</html>
