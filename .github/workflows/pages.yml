@@ -1,0 +1,130 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - claude/chinese-trip-learning-app-U3Le0
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Leaderboard backend is now Firebase Realtime DB, configured by hand
+      # in basic-mandarin-for-ahasliders/config.js. No auto-bootstrap step.
+
+      - name: Fetch AhaSlides logo from public brand-assets page (best effort)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          LOGO_FILE=basic-mandarin-for-ahasliders/aha-logo.svg
+          BRAND_PAGE="https://ahaslides.com/about-us/brand-assets"
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+          # If the file is already an official logo (contains the brand splash hex codes), skip.
+          if [ -f "$LOGO_FILE" ] && grep -qi 'FF4081\|6A1EBB' "$LOGO_FILE"; then
+            echo "Splash-coloured logo already in place — skipping fetch."
+            exit 0
+          fi
+
+          echo "::group::Scraping $BRAND_PAGE"
+          HTML=$(curl -fsSL -A "$UA" --max-time 25 "$BRAND_PAGE" || echo "")
+          if [ -z "$HTML" ]; then
+            echo "Brand-assets page unreachable — keeping current placeholder."
+            exit 0
+          fi
+
+          # Pull every SVG URL we can find, then prefer one whose path mentions "logo".
+          ALL=$(printf '%s' "$HTML" | grep -oE 'https://[^"'"'"' ]+\.svg' | sort -u || true)
+          echo "All SVGs found:"
+          printf '%s\n' "$ALL"
+          PICK=$(printf '%s\n' "$ALL" | grep -i -E 'logo|ahaslide' | head -1 || true)
+          if [ -z "$PICK" ]; then
+            PICK=$(printf '%s\n' "$ALL" | head -1)
+          fi
+          echo "Picked: $PICK"
+          echo "::endgroup::"
+
+          if [ -z "$PICK" ]; then
+            echo "No SVG URL detected on brand page — keeping placeholder."
+            exit 0
+          fi
+
+          TMP=$(mktemp --suffix=.svg)
+          if curl -fsSL -A "$UA" --max-time 25 "$PICK" -o "$TMP"; then
+            # Reject obviously broken / non-SVG / huge payloads.
+            SIZE=$(wc -c < "$TMP")
+            if ! head -c 4096 "$TMP" | grep -qi '<svg'; then
+              echo "Downloaded file is not an SVG — discarding."
+              rm -f "$TMP"
+              exit 0
+            fi
+            if [ "$SIZE" -gt 200000 ]; then
+              echo "Downloaded SVG is suspiciously large ($SIZE bytes) — discarding."
+              rm -f "$TMP"
+              exit 0
+            fi
+            # Sanitize and reduce to splash-only (drop dark wordmark paths, crop viewBox).
+            python3 - "$TMP" "$LOGO_FILE" <<'PY'
+          import re, sys
+          src, dst = sys.argv[1], sys.argv[2]
+          with open(src, 'r', encoding='utf-8', errors='replace') as f:
+              s = f.read()
+          # Strip <script> tags and inline event handlers
+          s = re.sub(r'<script[\s\S]*?</script>', '', s, flags=re.I)
+          s = re.sub(r'on[a-z]+\s*=\s*"[^"]*"', '', s, flags=re.I)
+          s = re.sub(r"on[a-z]+\s*=\s*'[^']*'", '', s, flags=re.I)
+          # Drop dark-wordmark paths so the splash is readable on any background
+          s = re.sub(r'<path[^>]*fill="#1[Aa]1[Aa]2[Ee]"[^>]*/>\s*', '', s)
+          # Crop viewBox + outer dims to the splash bounds
+          s = re.sub(r'viewBox="[^"]*"', 'viewBox="-1 -1 28 28"', s, count=1)
+          s = re.sub(r'\swidth="[^"]*"',  ' width="26"',  s, count=1)
+          s = re.sub(r'\sheight="[^"]*"', ' height="26"', s, count=1)
+          with open(dst, 'w', encoding='utf-8') as f:
+              f.write(s)
+          PY
+            echo "Logo saved ($(wc -c < "$LOGO_FILE") bytes) from $PICK"
+            rm -f "$TMP"
+          else
+            echo "Failed to download $PICK — keeping placeholder."
+            exit 0
+          fi
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          if ! git diff --quiet "$LOGO_FILE"; then
+            git add "$LOGO_FILE"
+            git commit -m "Pull official AhaSlides logo from brand-assets page"
+            git push
+          else
+            echo "Logo unchanged — nothing to commit."
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site as artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
