@@ -208,6 +208,48 @@ main { padding: 16px; }
 
 .tip-card strong { color: var(--ink); }
 
+/* ----------------- Module (language) switcher ----------------- */
+
+.module-switcher {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 16px;
+  padding: 4px;
+  background: var(--surface-2);
+  border-radius: 14px;
+}
+
+.module-pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.module-pill:hover { color: var(--ink); }
+
+.module-pill.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.module-pill .module-flag {
+  font-size: 17px;
+  line-height: 1;
+}
+
 .section-row {
   display: flex;
   align-items: baseline;

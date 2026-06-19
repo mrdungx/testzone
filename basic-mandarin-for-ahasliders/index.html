@@ -30,7 +30,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Quick Mandarin" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://api.dicebear.com" crossorigin />
@@ -71,6 +71,8 @@
       <div class="tip-card">
         <strong>Tip:</strong> Many Chinese words are nearly identical to Vietnamese (Hán Việt). Look for the <span class="hv-pill">HV</span> badge — those are essentially free for you.
       </div>
+
+      <div id="module-switcher" class="module-switcher"></div>
 
       <div class="section-row">
         <h3 class="section-h">Your 10-day plan</h3>
@@ -142,9 +144,9 @@
     </div>
   </template>
 
-  <script src="config.js?v=6"></script>
-  <script src="lessons.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script src="lessons.js?v=7"></script>
+  <script src="app.js?v=7"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

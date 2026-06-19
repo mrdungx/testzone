@@ -11,6 +11,44 @@
 
   const LEARNER_KEY = 'china-trip-learner-v1';
   const OLD_PROGRESS_KEY = 'china-trip-progress-v1';
+  const MODULE_KEY = 'qm-current-module';
+
+  function getCurrentModuleCode() {
+    const l = loadLearner();
+    if (l && l.currentModule && MODULES[l.currentModule]) return l.currentModule;
+    const stored = localStorage.getItem(MODULE_KEY);
+    if (stored && MODULES[stored]) return stored;
+    return DEFAULT_MODULE;
+  }
+
+  function setCurrentModuleCode(code) {
+    if (!MODULES[code]) return;
+    localStorage.setItem(MODULE_KEY, code);
+    const l = loadLearner();
+    if (l) {
+      l.currentModule = code;
+      saveLearner(l);
+    }
+  }
+
+  function getModule() {
+    return MODULES[getCurrentModuleCode()];
+  }
+
+  function emptyProgress() {
+    return {
+      completedLessons: [],
+      wordsStudied: 0,
+      streak: 0,
+      lastStudyDate: null,
+      updatedAt: Date.now(),
+    };
+  }
+
+  function getProgress(learner, moduleCode) {
+    if (!learner || !learner.progress) return emptyProgress();
+    return learner.progress[moduleCode] || emptyProgress();
+  }
 
   const AVATAR_STYLES = [
     { id: 'lorelei',         label: '🙂 Faces' },
@@ -25,12 +63,43 @@
 
   // ---------------- Local learner state ----------------
 
+  function migrateLearner(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (raw.progress && typeof raw.progress === 'object') {
+      // Already in per-module shape — fill in missing module slots.
+      MODULE_ORDER.forEach(m => {
+        if (!raw.progress[m]) raw.progress[m] = emptyProgress();
+      });
+      if (!raw.currentModule || !MODULES[raw.currentModule]) raw.currentModule = DEFAULT_MODULE;
+      return raw;
+    }
+    // Old shape — top-level completedLessons/wordsStudied/etc. Migrate into progress.zh.
+    return {
+      id: raw.id,
+      nickname: raw.nickname,
+      avatarStyle: raw.avatarStyle,
+      avatarSeed: raw.avatarSeed,
+      currentModule: DEFAULT_MODULE,
+      progress: {
+        zh: {
+          completedLessons: raw.completedLessons || [],
+          wordsStudied: raw.wordsStudied || 0,
+          streak: raw.streak || 0,
+          lastStudyDate: raw.lastStudyDate || null,
+          updatedAt: raw.updatedAt || Date.now(),
+        },
+        ja: emptyProgress(),
+      },
+      updatedAt: raw.updatedAt || Date.now(),
+    };
+  }
+
   function loadLearner() {
     try {
       const raw = localStorage.getItem(LEARNER_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) return migrateLearner(JSON.parse(raw));
     } catch {}
-    // Migrate from old progress-only key if present
+    // Migrate from very-old progress-only key if present (no profile yet).
     try {
       const old = JSON.parse(localStorage.getItem(OLD_PROGRESS_KEY) || 'null');
       if (old && typeof old === 'object') {
@@ -56,15 +125,23 @@
   }
 
   function newLearner({ nickname, avatarStyle, avatarSeed, existing }) {
+    // Seed progress.zh from a legacy pending-migration shape if we have one.
+    const seededZh = (existing && existing._migrationPending) ? {
+      completedLessons: existing.completedLessons || [],
+      wordsStudied: existing.wordsStudied || 0,
+      streak: existing.streak || 0,
+      lastStudyDate: existing.lastStudyDate || null,
+      updatedAt: Date.now(),
+    } : (existing && existing.progress && existing.progress.zh) || emptyProgress();
+    const seededJa = (existing && existing.progress && existing.progress.ja) || emptyProgress();
+
     return {
       id: (existing && existing.id) || genId(),
       nickname: nickname.trim(),
       avatarStyle,
       avatarSeed,
-      completedLessons: (existing && existing.completedLessons) || [],
-      wordsStudied: (existing && existing.wordsStudied) || 0,
-      streak: (existing && existing.streak) || 0,
-      lastStudyDate: (existing && existing.lastStudyDate) || null,
+      currentModule: (existing && existing.currentModule) || getCurrentModuleCode(),
+      progress: { zh: seededZh, ja: seededJa },
       updatedAt: Date.now(),
     };
   }
@@ -72,16 +149,20 @@
   function markLessonDone(lessonId, wordsCount) {
     const l = loadLearner();
     if (!l || !l.id) return;
-    if (!l.completedLessons.includes(lessonId)) {
-      l.completedLessons.push(lessonId);
-      l.wordsStudied += wordsCount;
+    const moduleCode = getCurrentModuleCode();
+    if (!l.progress[moduleCode]) l.progress[moduleCode] = emptyProgress();
+    const p = l.progress[moduleCode];
+    if (!p.completedLessons.includes(lessonId)) {
+      p.completedLessons.push(lessonId);
+      p.wordsStudied += wordsCount;
     }
     const today = new Date().toISOString().slice(0, 10);
-    if (l.lastStudyDate !== today) {
+    if (p.lastStudyDate !== today) {
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      l.streak = l.lastStudyDate === yesterday ? l.streak + 1 : 1;
-      l.lastStudyDate = today;
+      p.streak = p.lastStudyDate === yesterday ? p.streak + 1 : 1;
+      p.lastStudyDate = today;
     }
+    p.updatedAt = Date.now();
     l.updatedAt = Date.now();
     saveLearner(l);
     pushRemote(l);
@@ -134,10 +215,8 @@
       nickname: l.nickname,
       avatarStyle: l.avatarStyle,
       avatarSeed: l.avatarSeed,
-      completedLessons: l.completedLessons,
-      wordsStudied: l.wordsStudied,
-      streak: l.streak,
-      lastStudyDate: l.lastStudyDate,
+      currentModule: l.currentModule,
+      progress: l.progress,
       updatedAt: l.updatedAt,
     };
   }
@@ -156,27 +235,28 @@
 
   // ---------------- Speech ----------------
 
-  let zhVoice = null;
+  let allVoices = [];
   function loadVoices() {
-    const voices = speechSynthesis.getVoices();
-    zhVoice =
-      voices.find(v => v.lang === 'zh-CN') ||
-      voices.find(v => v.lang.startsWith('zh-CN')) ||
-      voices.find(v => v.lang.startsWith('zh')) ||
-      null;
+    allVoices = speechSynthesis.getVoices();
   }
   if ('speechSynthesis' in window) {
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
   }
+  function pickVoice(locale) {
+    return allVoices.find(v => v.lang === locale)
+        || allVoices.find(v => v.lang.startsWith(locale.split('-')[0] + '-'))
+        || allVoices.find(v => v.lang.startsWith(locale.split('-')[0]))
+        || null;
+  }
   function speak(text) {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window) || !text) return;
     speechSynthesis.cancel();
-    const clean = text.replace(/[^一-鿿]/g, '');
-    if (!clean) return;
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = 'zh-CN';
-    if (zhVoice) u.voice = zhVoice;
+    const u = new SpeechSynthesisUtterance(String(text));
+    const locale = getModule().locale;
+    u.lang = locale;
+    const v = pickVoice(locale);
+    if (v) u.voice = v;
     u.rate = 0.85;
     speechSynthesis.speak(u);
   }
@@ -228,9 +308,28 @@
 
   function daysUntilTrip() {
     const now = new Date();
-    const trip = new Date(TRIP_DATE + 'T00:00:00');
+    const trip = new Date(getModule().tripDate + 'T00:00:00');
     const ms = trip - new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return Math.ceil(ms / 86400000);
+  }
+
+  function renderModuleSwitcher(activeCode) {
+    const container = $('#module-switcher');
+    if (!container) return;
+    container.innerHTML = '';
+    MODULE_ORDER.forEach(code => {
+      const mod = MODULES[code];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'module-pill' + (code === activeCode ? ' active' : '');
+      btn.innerHTML = `<span class="module-flag">${mod.flag}</span><span>${mod.name}</span>`;
+      btn.addEventListener('click', () => {
+        if (code === activeCode) return;
+        setCurrentModuleCode(code);
+        renderHome();
+      });
+      container.appendChild(btn);
+    });
   }
 
   function renderHome() {
@@ -243,17 +342,23 @@
       return;
     }
 
+    const moduleCode = getCurrentModuleCode();
+    const mod = MODULES[moduleCode];
+    const p = getProgress(learner, moduleCode);
+
     $('#hero-name').textContent = learner.nickname;
     $('#hero-avatar').style.backgroundImage = `url("${avatarUrl(learner.avatarStyle, learner.avatarSeed, 120)}")`;
     $('#profile-chip').addEventListener('click', () => showOnboarding({ edit: true }));
 
     $('#days-left').textContent = Math.max(0, daysUntilTrip());
-    $('#words-learned').textContent = learner.wordsStudied;
-    $('#streak').textContent = learner.streak;
+    $('#words-learned').textContent = p.wordsStudied;
+    $('#streak').textContent = p.streak;
+
+    renderModuleSwitcher(moduleCode);
 
     const list = $('#lesson-list');
-    LESSONS.forEach(lesson => {
-      const done = learner.completedLessons.includes(lesson.id);
+    mod.lessons.forEach(lesson => {
+      const done = p.completedLessons.includes(lesson.id);
       const li = document.createElement('li');
       li.className = 'lesson-card' + (done ? ' done' : '');
       li.innerHTML = `
@@ -269,12 +374,9 @@
     });
 
     $('#reset-btn').addEventListener('click', () => {
-      if (confirm('Reset your progress? Your nickname & avatar stay; words & streak reset.')) {
+      if (confirm(`Reset progress for ${mod.name}? Your nickname & avatar stay; only this language's words & streak reset.`)) {
         const l = loadLearner();
-        l.completedLessons = [];
-        l.wordsStudied = 0;
-        l.streak = 0;
-        l.lastStudyDate = null;
+        l.progress[moduleCode] = emptyProgress();
         l.updatedAt = Date.now();
         saveLearner(l);
         pushRemote(l);
@@ -288,39 +390,68 @@
     }
   }
 
+  // Pull the per-module stats off a remote learner record. Handles both the new
+  // shape ({ progress: { zh, ja } }) and the legacy flat shape some entries may
+  // still have in Firebase from before the multi-module migration.
+  function statsForModule(remoteLearner, moduleCode) {
+    if (!remoteLearner) return null;
+    if (remoteLearner.progress && remoteLearner.progress[moduleCode]) {
+      return remoteLearner.progress[moduleCode];
+    }
+    if (moduleCode === 'zh' && typeof remoteLearner.wordsStudied === 'number') {
+      return {
+        completedLessons: remoteLearner.completedLessons || [],
+        wordsStudied: remoteLearner.wordsStudied,
+        streak: remoteLearner.streak || 0,
+        lastStudyDate: remoteLearner.lastStudyDate || null,
+      };
+    }
+    return null;
+  }
+
   async function refreshLeaderboard(currentLearner) {
     const el = $('#leaderboard');
     const status = $('#learners-status');
     if (!el) return;
 
+    const moduleCode = getCurrentModuleCode();
+
     if (CONFIG.mode !== 'firebase') {
       status.textContent = 'local mode';
-      el.innerHTML = renderLeaderboardRows([currentLearner], currentLearner.id);
+      el.innerHTML = renderLeaderboardRows([currentLearner], currentLearner.id, moduleCode);
       return;
     }
 
     status.textContent = 'syncing…';
     const data = await fetchRemote();
     if (!data[currentLearner.id]) data[currentLearner.id] = stripLearnerForRemote(currentLearner);
-    const learners = Object.values(data);
-    status.textContent = `${learners.length} learner${learners.length === 1 ? '' : 's'}`;
-    el.innerHTML = renderLeaderboardRows(learners, currentLearner.id);
+    // Only include learners who have any progress in the current module.
+    const learners = Object.values(data).filter(l => {
+      const s = statsForModule(l, moduleCode);
+      return s && (s.wordsStudied > 0 || (s.completedLessons || []).length > 0 || l.id === currentLearner.id);
+    });
+    status.textContent = `${learners.length} ${MODULES[moduleCode].flag} learner${learners.length === 1 ? '' : 's'}`;
+    el.innerHTML = renderLeaderboardRows(learners, currentLearner.id, moduleCode);
   }
 
-  function renderLeaderboardRows(learners, currentId) {
+  function renderLeaderboardRows(learners, currentId, moduleCode) {
     if (!learners.length) {
       return `<div class="leaderboard-empty">Bạn là người đầu tiên! Mời bạn bè vào học cùng nhé 🎉</div>`;
     }
+    const lessonCount = MODULES[moduleCode].lessons.length;
     const sorted = learners.slice().sort((a, b) => {
-      if (b.wordsStudied !== a.wordsStudied) return b.wordsStudied - a.wordsStudied;
-      return (b.streak || 0) - (a.streak || 0);
+      const sa = statsForModule(a, moduleCode) || { wordsStudied: 0, streak: 0 };
+      const sb = statsForModule(b, moduleCode) || { wordsStudied: 0, streak: 0 };
+      if (sb.wordsStudied !== sa.wordsStudied) return sb.wordsStudied - sa.wordsStudied;
+      return (sb.streak || 0) - (sa.streak || 0);
     });
     return sorted.map((l, i) => {
+      const s = statsForModule(l, moduleCode) || { wordsStudied: 0, streak: 0, completedLessons: [] };
       const rank = i + 1;
       const medalClass = rank <= 3 ? `medal-${rank}` : '';
       const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
       const isYou = l.id === currentId;
-      const lessonsDone = (l.completedLessons || []).length;
+      const lessonsDone = (s.completedLessons || []).length;
       return `
         <div class="leaderboard-row${isYou ? ' you' : ''}">
           <div class="lb-rank ${medalClass}">${medal}</div>
@@ -331,12 +462,12 @@
               ${isYou ? '<span class="you-tag">YOU</span>' : ''}
             </div>
             <div class="lb-stats">
-              Day ${lessonsDone}/10
+              Day ${lessonsDone}/${lessonCount}
               <span class="sep">·</span>
-              ${l.streak || 0}🔥
+              ${s.streak || 0}🔥
             </div>
           </div>
-          <div class="lb-right">${l.wordsStudied || 0}<small>words</small></div>
+          <div class="lb-right">${s.wordsStudied || 0}<small>words</small></div>
         </div>
       `;
     }).join('');
@@ -464,13 +595,14 @@
   }
 
   function renderLesson(lessonId) {
-    const lesson = LESSONS.find(l => l.id === lessonId);
+    const mod = getModule();
+    const lesson = mod.lessons.find(l => l.id === lessonId);
     if (!lesson) return go('home');
 
     const tpl = $('#tpl-lesson').content.cloneNode(true);
     app.replaceChildren(tpl);
     titleEl.textContent = `Day ${lesson.id}`;
-    $('#day-pill').textContent = `Day ${lesson.id} of 10`;
+    $('#day-pill').textContent = `Day ${lesson.id} of ${mod.lessons.length}`;
     $('#lesson-title').textContent = lesson.title;
     $('#lesson-sub').textContent = lesson.subtitle;
 
@@ -627,11 +759,12 @@
     const tpl = $('#tpl-cheatsheet').content.cloneNode(true);
     app.replaceChildren(tpl);
 
+    const mod = getModule();
     const vocabByHanzi = {};
-    LESSONS.forEach(l => l.vocab.forEach(v => { vocabByHanzi[v.hanzi] = v; }));
+    mod.lessons.forEach(l => l.vocab.forEach(v => { vocabByHanzi[v.hanzi] = v; }));
 
     const body = $('#cheat-body');
-    CHEAT_GROUPS.forEach(group => {
+    mod.cheatGroups.forEach(group => {
       const section = document.createElement('div');
       section.className = 'cheat-section';
       section.innerHTML = `<h3>${escapeHtml(group.title)}</h3>`;

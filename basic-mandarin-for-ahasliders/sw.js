@@ -1,16 +1,16 @@
 // Service worker for Quick Mandarin — offline support on the plane.
 // Bump VERSION whenever you bump the ?v=N query params in index.html.
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE_NAME = 'qm-aha-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=6',
-  './config.js?v=6',
-  './lessons.js?v=6',
-  './app.js?v=6',
+  './styles.css?v=7',
+  './config.js?v=7',
+  './lessons.js?v=7',
+  './app.js?v=7',
   './aha-logo.svg?v=2',
   './manifest.json',
   './icon-180.png',
